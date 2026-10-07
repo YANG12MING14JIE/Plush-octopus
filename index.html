@@ -1,0 +1,3363 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>毛絨章魚</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* 版面概念：海玻璃色攝影棚，章魚是唯一主角；左上標題、右側半透明調整面板、左下即時數據 */
+:root {
+  --bg-top: #dbe7e4;
+  --bg-bottom: #c9dad6;
+  --ink: #1d2c2b;
+  --ink-soft: #4b615e;
+  --line: rgba(29, 44, 43, .13);
+  --chip: rgba(255, 255, 255, .45);
+  --panel: rgba(243, 248, 246, .76);
+  --panel-strong: #fbfdfc;
+  --track: rgba(29, 44, 43, .14);
+  --accent: #e9785d;
+  --shadow-ui: rgba(20, 45, 42, .35);
+  /* WebGL 場景讀取的顏色（必須是 #rrggbb） */
+  --gl-bg-top: #e3ede9;
+  --gl-bg-bottom: #c4d6d1;
+  --gl-shadow: #2b4643;
+  --gl-sky: #f2faf7;
+  --gl-ground: #b3c7c1;
+  --font-display: "Huninn", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-top: #17272a; --bg-bottom: #0e1a1c;
+    --ink: #e3ecea; --ink-soft: #9fb5b1; --line: rgba(227, 236, 234, .12);
+    --chip: rgba(255, 255, 255, .05);
+    --panel: rgba(20, 34, 37, .76); --panel-strong: #24393c;
+    --track: rgba(227, 236, 234, .16); --accent: #f08a6f; --shadow-ui: rgba(0, 0, 0, .5);
+    --gl-bg-top: #1c3033; --gl-bg-bottom: #0a1416; --gl-shadow: #000000;
+    --gl-sky: #87a9a7; --gl-ground: #26383a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg-top: #17272a; --bg-bottom: #0e1a1c;
+  --ink: #e3ecea; --ink-soft: #9fb5b1; --line: rgba(227, 236, 234, .12);
+  --chip: rgba(255, 255, 255, .05);
+  --panel: rgba(20, 34, 37, .76); --panel-strong: #24393c;
+  --track: rgba(227, 236, 234, .16); --accent: #f08a6f; --shadow-ui: rgba(0, 0, 0, .5);
+  --gl-bg-top: #1c3033; --gl-bg-bottom: #0a1416; --gl-shadow: #000000;
+  --gl-sky: #87a9a7; --gl-ground: #26383a;
+  color-scheme: dark;
+}
+
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg-bottom);
+  color: var(--ink);
+  font: 14px/1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+#scene {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  touch-action: none;
+  outline: none;
+  cursor: grab;
+}
+#scene.is-hover { cursor: pointer; }
+#scene.is-drag { cursor: grabbing; }
+#scene.is-comb {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Ccircle cx='14' cy='14' r='11' fill='none' stroke='white' stroke-width='3'/%3E%3Ccircle cx='14' cy='14' r='11' fill='none' stroke='%231d2c2b' stroke-width='1.4'/%3E%3Ccircle cx='14' cy='14' r='1.6' fill='%231d2c2b'/%3E%3C/svg%3E") 14 14, crosshair;
+}
+
+/* ---- 左上：標題 ---- */
+.intro {
+  position: fixed;
+  top: calc(22px + env(safe-area-inset-top, 0px));
+  left: max(24px, env(safe-area-inset-left, 0px));
+  width: min(400px, calc(100% - 340px));
+  pointer-events: none;
+}
+.eyebrow {
+  margin: 0 0 10px;
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.intro h1 {
+  margin: 0 0 10px;
+  font: 400 clamp(34px, 4.4vw, 56px)/1.05 var(--font-display);
+  letter-spacing: .04em;
+  text-wrap: balance;
+}
+.lede {
+  margin: 0 0 14px;
+  max-width: 30em;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+}
+.howto {
+  list-style: none;
+  margin: 0; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.howto li {
+  font-size: 12px;
+  color: var(--ink-soft);
+  background: var(--chip);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+.howto b { color: var(--ink); font-weight: 500; margin-right: 5px; }
+.howto-touch { display: none; }
+
+/* ---- 右側：調整面板 ---- */
+.panel {
+  position: fixed;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  right: max(16px, env(safe-area-inset-right, 0px));
+  width: 268px;
+  max-height: calc(100% - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  backdrop-filter: blur(16px) saturate(1.15);
+  box-shadow: 0 14px 34px -22px var(--shadow-ui);
+}
+.panel-toggle { display: none; }
+.panel-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px 16px 16px;
+}
+.panel section {
+  display: grid; gap: 11px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.panel h2 {
+  margin: 0;
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: .14em;
+  color: var(--ink-soft);
+}
+.ctl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0 8px;
+}
+.ctl label { font-size: 13px; }
+.ctl output {
+  font: 12px/1 var(--font-mono);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.ctl input[type="range"] { grid-column: 1 / -1; }
+
+input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 20px; margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 2px;
+  background: linear-gradient(to right, var(--accent) var(--fill, 50%), var(--track) var(--fill, 50%));
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px; margin-top: -6px;
+  border-radius: 50%;
+  background: var(--panel-strong);
+  border: 2px solid var(--accent);
+  box-shadow: 0 1px 3px var(--shadow-ui);
+}
+input[type="range"]::-moz-range-track { height: 4px; border-radius: 2px; background: var(--track); }
+input[type="range"]::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent); }
+input[type="range"]::-moz-range-thumb {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--panel-strong); border: 2px solid var(--accent);
+}
+input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+.swatch-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.swatch-row span { font-size: 13px; }
+.swatches { display: flex; gap: 9px; }
+.sw {
+  position: relative;
+  width: 24px; height: 24px; padding: 0;
+  border: 0; border-radius: 50%;
+  cursor: pointer;
+  background: radial-gradient(circle at 34% 30%, color-mix(in srgb, var(--c) 62%, white), var(--c) 58%, color-mix(in srgb, var(--c) 78%, black));
+}
+.sw[aria-checked="true"]::after {
+  content: "";
+  position: absolute; inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+}
+.sw:focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; }
+
+.seg {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 3px;
+  padding: 3px;
+  background: var(--track);
+  border-radius: 10px;
+}
+.seg button {
+  border: 0; border-radius: 8px;
+  padding: 6px 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit; font-size: 13px;
+  cursor: pointer;
+}
+.seg button[aria-checked="true"] { background: var(--panel-strong); box-shadow: 0 1px 2px var(--shadow-ui); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.tog {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.tog small { display: block; color: var(--ink-soft); font-size: 11.5px; line-height: 1.35; }
+.tog input {
+  -webkit-appearance: none; appearance: none;
+  flex: none;
+  position: relative;
+  width: 34px; height: 20px; margin: 0;
+  border-radius: 999px;
+  background: var(--track);
+  cursor: pointer;
+  transition: background .2s;
+}
+.tog input::after {
+  content: "";
+  position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--panel-strong);
+  box-shadow: 0 1px 2px var(--shadow-ui);
+  transition: transform .2s;
+}
+.tog input:checked { background: var(--accent); }
+.tog input:checked::after { transform: translateX(14px); }
+.tog input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-top: 14px; }
+.actions button {
+  padding: 8px 0;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--panel-strong);
+  color: var(--ink);
+  font: inherit; font-size: 13px;
+  cursor: pointer;
+}
+.actions button.primary { background: var(--ink); color: var(--bg-top); border-color: transparent; }
+.actions button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions button:active { transform: translateY(1px); }
+
+/* ---- 左下：即時數據 ---- */
+.stats {
+  position: fixed;
+  left: max(24px, env(safe-area-inset-left, 0px));
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  margin: 0;
+  font: 11px/1.7 var(--font-mono);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: pre;
+  pointer-events: none;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(26px + env(safe-area-inset-bottom, 0px));
+  max-width: calc(100% - 32px);
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bg-top);
+  font-size: 13px;
+  text-align: center;
+  opacity: 0;
+  transform: translate(-50%, 8px);
+  transition: opacity .25s, transform .25s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+.fallback {
+  position: fixed; inset: 0;
+  display: grid; place-items: center;
+  padding: 24px;
+  background: var(--bg-bottom);
+  color: var(--ink);
+  text-align: center;
+}
+.fallback p { max-width: 28em; }
+
+@media (max-width: 720px) {
+  .intro { left: 16px; width: calc(100% - 32px); top: calc(14px + env(safe-area-inset-top, 0px)); }
+  .intro h1 { font-size: 32px; margin-bottom: 6px; }
+  .lede { font-size: 12.5px; margin-bottom: 8px; }
+  .howto { display: none; }
+  .howto-touch { display: block; margin: 0; font-size: 12px; color: var(--ink-soft); }
+  .stats { display: none; }
+  .panel {
+    top: auto; left: 16px; right: 16px; width: auto;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    max-height: 56%;
+  }
+  .panel-toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%;
+    padding: 12px 16px;
+    border: 0; background: transparent;
+    color: var(--ink);
+    font: 500 14px/1.2 var(--font-body);
+    cursor: pointer;
+  }
+  .panel-toggle::after { content: "展開"; font: 12px var(--font-mono); color: var(--ink-soft); }
+  .panel.open .panel-toggle::after { content: "收合"; }
+  .panel:not(.open) .panel-body { display: none; }
+  .intro { transition: opacity .2s; }
+  body.panel-open .intro { opacity: 0; visibility: hidden; }
+  .toast { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; }
+}
+</style>
+</head>
+<body>
+<canvas id="scene" aria-label="可互動的 3D 毛絨章魚：拖曳可以拉扯或拋擲，梳毛模式可以梳理毛的方向"></canvas>
+
+<header class="intro">
+  <p class="eyebrow">WebGL2 · 純程式碼生成</p>
+  <h1>毛絨章魚</h1>
+  <p class="lede">沒有模型檔、沒有貼圖。毛是幾十層殼層即時算出來的，頭和觸手是軟體物理，觸手還會黏著你的游標。</p>
+  <ul class="howto">
+    <li><b>拖曳章魚</b>拉扯、拋擲</li>
+    <li><b>點一下</b>戳戳看</li>
+    <li><b>Shift＋拖曳</b>梳毛</li>
+    <li><b>拖曳空白處</b>轉視角</li>
+    <li><b>滾輪</b>縮放</li>
+  </ul>
+  <p class="howto-touch">拖曳章魚可以拉扯，拖空白處轉視角，雙指縮放；梳毛在下方「調整」切換。</p>
+</header>
+
+<aside class="panel" id="panel" aria-label="調整">
+  <button class="panel-toggle" id="panelToggle" type="button" aria-expanded="false" aria-controls="panelBody">調整</button>
+  <div class="panel-body" id="panelBody">
+    <section aria-labelledby="h-look">
+      <h2 id="h-look">外觀</h2>
+      <div class="swatch-row">
+        <span id="colorLabel">顏色</span>
+        <div class="swatches" role="radiogroup" aria-labelledby="colorLabel">
+          <button type="button" class="sw" id="sw-coral" role="radio" aria-checked="true" aria-label="珊瑚" style="--c:#e9785d" data-color="#e9785d" data-belly="#f6e3c8"></button>
+          <button type="button" class="sw" id="sw-peach" role="radio" aria-checked="false" aria-label="蜜桃" style="--c:#f2a37f" data-color="#f2a37f" data-belly="#fbecd9"></button>
+          <button type="button" class="sw" id="sw-lilac" role="radio" aria-checked="false" aria-label="薰衣草" style="--c:#a993d8" data-color="#a993d8" data-belly="#efe6f6"></button>
+          <button type="button" class="sw" id="sw-mint" role="radio" aria-checked="false" aria-label="薄荷" style="--c:#7cc7ad" data-color="#7cc7ad" data-belly="#e6f4e6"></button>
+          <button type="button" class="sw" id="sw-sea" role="radio" aria-checked="false" aria-label="海藍" style="--c:#6f9fd8" data-color="#6f9fd8" data-belly="#e4edf8"></button>
+        </div>
+      </div>
+      <div class="ctl">
+        <label for="furLen">毛長</label><output id="furLenOut" for="furLen">7.5 mm</output>
+        <input type="range" id="furLen" min="0.02" max="0.14" step="0.005" value="0.075">
+      </div>
+      <div class="ctl">
+        <label for="density">毛密度</label><output id="densityOut" for="density">9.5 根/cm</output>
+        <input type="range" id="density" min="50" max="170" step="5" value="95">
+      </div>
+      <div class="ctl">
+        <label for="fluff">蓬鬆度</label><output id="fluffOut" for="fluff">50%</output>
+        <input type="range" id="fluff" min="0" max="1" step="0.05" value="0.5">
+      </div>
+      <div class="ctl">
+        <label for="shells">殼層數</label><output id="shellsOut" for="shells">28 層</output>
+        <input type="range" id="shells" min="8" max="48" step="2" value="28">
+      </div>
+    </section>
+
+    <section aria-labelledby="h-phys">
+      <h2 id="h-phys">物理</h2>
+      <div class="ctl">
+        <label for="softness">柔軟度</label><output id="softnessOut" for="softness">55%</output>
+        <input type="range" id="softness" min="0" max="1" step="0.05" value="0.55">
+      </div>
+      <div class="ctl">
+        <label for="lively">觸手活力</label><output id="livelyOut" for="lively">60%</output>
+        <input type="range" id="lively" min="0" max="1" step="0.05" value="0.6">
+      </div>
+      <div class="ctl">
+        <label for="gravity">重力</label><output id="gravityOut" for="gravity">1.0 g</output>
+        <input type="range" id="gravity" min="0" max="2" step="0.1" value="1">
+      </div>
+    </section>
+
+    <section aria-labelledby="h-play">
+      <h2 id="h-play">互動</h2>
+      <div class="seg" role="radiogroup" aria-labelledby="h-play">
+        <button type="button" id="tool-grab" role="radio" aria-checked="true" data-tool="grab">抓取</button>
+        <button type="button" id="tool-comb" role="radio" aria-checked="false" data-tool="comb">梳毛</button>
+      </div>
+      <label class="tog" for="clingy"><span>黏人模式<small>游標靠近時觸手會伸過來黏住</small></span><input type="checkbox" id="clingy" checked></label>
+      <label class="tog" for="sound"><span>音效</span><input type="checkbox" id="sound" checked></label>
+      <label class="tog" for="autoQ"><span>自動畫質<small>太卡時自動降低解析度與層數</small></span><input type="checkbox" id="autoQ" checked></label>
+    </section>
+
+    <div class="actions">
+      <button type="button" id="tossBtn" class="primary">拋起來</button>
+      <button type="button" id="fluffBtn" aria-label="清除梳痕，讓毛重新蓬起來">弄蓬毛</button>
+      <button type="button" id="resetBtn">重置</button>
+    </div>
+  </div>
+</aside>
+
+<p class="stats" id="stats" aria-hidden="true"></p>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="fallback" id="fallback" hidden>
+  <p id="fallbackMsg">這個瀏覽器不支援 WebGL2，章魚出不來。請改用新版的 Chrome、Edge、Safari 或 Firefox 開啟。</p>
+</div>
+<script type="module">
+// =====================================================================
+// 毛絨章魚 Plush Octopus — 純 WebGL2，無任何外部函式庫、無模型檔、無貼圖
+// 結構：1 數學 → 2 頭部軟體 → 3 觸手 → 4 網格 → 5 著色器 → 6 渲染
+//       → 7 互動 → 8 介面 → 9 主迴圈
+// =====================================================================
+
+// ---------------------------------------------------------------------
+// 1. 數學工具
+// ---------------------------------------------------------------------
+const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, x) => {
+  const t = clamp((x - a) / (b - a), 0, 1);
+  return t * t * (3 - 2 * t);
+};
+
+// 可重現的亂數（mulberry32），讓每次開啟的章魚長得一樣
+function makeRng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// sRGB 十六進位 → 線性色彩（著色器在線性空間計算光照）
+function hexToLinear(hex) {
+  const h = hex.trim().replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const n = parseInt(full.slice(0, 6), 16);
+  const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+    const c = v / 255;
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return new Float32Array(ch);
+}
+
+// 4x4 矩陣（column-major，與 WebGL 相同）
+const M4 = {
+  create() {
+    const m = new Float32Array(16);
+    m[0] = m[5] = m[10] = m[15] = 1;
+    return m;
+  },
+  // 非對稱視錐：用來把畫面中心往左移，避開右側面板
+  frustum(out, l, r, b, t, n, f) {
+    out.fill(0);
+    out[0] = (2 * n) / (r - l);
+    out[5] = (2 * n) / (t - b);
+    out[8] = (r + l) / (r - l);
+    out[9] = (t + b) / (t - b);
+    out[10] = -(f + n) / (f - n);
+    out[11] = -1;
+    out[14] = (-2 * f * n) / (f - n);
+    return out;
+  },
+  lookAt(out, eye, target, up) {
+    let zx = eye[0] - target[0], zy = eye[1] - target[1], zz = eye[2] - target[2];
+    let l = Math.hypot(zx, zy, zz);
+    zx /= l; zy /= l; zz /= l;
+    let xx = up[1] * zz - up[2] * zy, xy = up[2] * zx - up[0] * zz, xz = up[0] * zy - up[1] * zx;
+    l = Math.hypot(xx, xy, xz);
+    xx /= l; xy /= l; xz /= l;
+    const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+    out[0] = xx; out[1] = yx; out[2] = zx; out[3] = 0;
+    out[4] = xy; out[5] = yy; out[6] = zy; out[7] = 0;
+    out[8] = xz; out[9] = yz; out[10] = zz; out[11] = 0;
+    out[12] = -(xx * eye[0] + xy * eye[1] + xz * eye[2]);
+    out[13] = -(yx * eye[0] + yy * eye[1] + yz * eye[2]);
+    out[14] = -(zx * eye[0] + zy * eye[1] + zz * eye[2]);
+    out[15] = 1;
+    return out;
+  },
+  mul(out, a, b) {
+    const t = M4._tmp;
+    for (let c = 0; c < 4; c++) {
+      for (let r = 0; r < 4; r++) {
+        t[c * 4 + r] =
+          a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+      }
+    }
+    out.set(t);
+    return out;
+  },
+  _tmp: new Float32Array(16),
+};
+
+// 3x3 矩陣（row-major，物理計算用）
+const M3 = {
+  det(m) {
+    return (
+      m[0] * (m[4] * m[8] - m[5] * m[7]) -
+      m[1] * (m[3] * m[8] - m[5] * m[6]) +
+      m[2] * (m[3] * m[7] - m[4] * m[6])
+    );
+  },
+  inv(out, m) {
+    const d = M3.det(m);
+    const id = Math.abs(d) < 1e-12 ? 0 : 1 / d;
+    const a = m[0], b = m[1], c = m[2], dd = m[3], e = m[4], f = m[5], g = m[6], h = m[7], i = m[8];
+    out[0] = (e * i - f * h) * id; out[1] = (c * h - b * i) * id; out[2] = (b * f - c * e) * id;
+    out[3] = (f * g - dd * i) * id; out[4] = (a * i - c * g) * id; out[5] = (c * dd - a * f) * id;
+    out[6] = (dd * h - e * g) * id; out[7] = (b * g - a * h) * id; out[8] = (a * e - b * dd) * id;
+    return out;
+  },
+  mul(out, a, b) {
+    const t = M3._tmp;
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        t[r * 3 + c] = a[r * 3] * b[c] + a[r * 3 + 1] * b[3 + c] + a[r * 3 + 2] * b[6 + c];
+      }
+    }
+    out.set(t);
+    return out;
+  },
+  _tmp: new Float32Array(9),
+  // 四元數 → 旋轉矩陣
+  fromQuat(out, q) {
+    const x = q[0], y = q[1], z = q[2], w = q[3];
+    out[0] = 1 - 2 * (y * y + z * z); out[1] = 2 * (x * y - w * z); out[2] = 2 * (x * z + w * y);
+    out[3] = 2 * (x * y + w * z); out[4] = 1 - 2 * (x * x + z * z); out[5] = 2 * (y * z - w * x);
+    out[6] = 2 * (x * z - w * y); out[7] = 2 * (y * z + w * x); out[8] = 1 - 2 * (x * x + y * y);
+    return out;
+  },
+};
+
+// 從任意 3x3 矩陣抽出旋轉部分（Müller et al. 2016 迭代法，以上一幀結果暖啟動，穩定不翻轉）
+const _R = new Float32Array(9);
+function extractRotation(A, q, iters) {
+  for (let it = 0; it < iters; it++) {
+    M3.fromQuat(_R, q);
+    // ω = Σ r_i × a_i / |Σ r_i · a_i|（r_i、a_i 為兩矩陣的第 i 欄）
+    let ox = 0, oy = 0, oz = 0, dot = 0;
+    for (let c = 0; c < 3; c++) {
+      const rx = _R[c], ry = _R[3 + c], rz = _R[6 + c];
+      const ax = A[c], ay = A[3 + c], az = A[6 + c];
+      ox += ry * az - rz * ay;
+      oy += rz * ax - rx * az;
+      oz += rx * ay - ry * ax;
+      dot += rx * ax + ry * ay + rz * az;
+    }
+    const s = 1 / (Math.abs(dot) + 1e-9);
+    ox *= s; oy *= s; oz *= s;
+    const w = Math.hypot(ox, oy, oz);
+    if (w < 1e-9) break;
+    const h = w * 0.5, sh = Math.sin(h) / w;
+    const bx = ox * sh, by = oy * sh, bz = oz * sh, bw = Math.cos(h);
+    // q = b * q
+    const x = q[0], y = q[1], z = q[2], qw = q[3];
+    q[0] = bw * x + bx * qw + by * z - bz * y;
+    q[1] = bw * y - bx * z + by * qw + bz * x;
+    q[2] = bw * z + bx * y - by * x + bz * qw;
+    q[3] = bw * qw - bx * x - by * y - bz * z;
+    const l = Math.hypot(q[0], q[1], q[2], q[3]);
+    q[0] /= l; q[1] /= l; q[2] /= l; q[3] /= l;
+  }
+  return M3.fromQuat(_R, q);
+}
+
+// 正二十面體細分球（頭部物理粒子與渲染網格都用它）
+function icosphere(level) {
+  const t = (1 + Math.sqrt(5)) / 2;
+  let verts = [
+    [-1, t, 0], [1, t, 0], [-1, -t, 0], [1, -t, 0],
+    [0, -1, t], [0, 1, t], [0, -1, -t], [0, 1, -t],
+    [t, 0, -1], [t, 0, 1], [-t, 0, -1], [-t, 0, 1],
+  ].map((v) => {
+    const l = Math.hypot(v[0], v[1], v[2]);
+    return [v[0] / l, v[1] / l, v[2] / l];
+  });
+  let faces = [
+    [0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11],
+    [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
+    [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9],
+    [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1],
+  ];
+  for (let s = 0; s < level; s++) {
+    const cache = new Map();
+    const next = [];
+    const mid = (a, b) => {
+      const key = a < b ? a * 65536 + b : b * 65536 + a;
+      let i = cache.get(key);
+      if (i !== undefined) return i;
+      const va = verts[a], vb = verts[b];
+      const m = [va[0] + vb[0], va[1] + vb[1], va[2] + vb[2]];
+      const l = Math.hypot(m[0], m[1], m[2]);
+      i = verts.length;
+      verts.push([m[0] / l, m[1] / l, m[2] / l]);
+      cache.set(key, i);
+      return i;
+    };
+    for (const [a, b, c] of faces) {
+      const ab = mid(a, b), bc = mid(b, c), ca = mid(c, a);
+      next.push([a, ab, ca], [b, bc, ab], [c, ca, bc], [ab, bc, ca]);
+    }
+    faces = next;
+  }
+  // 統一成「從外面看逆時針」，WebGL 預設的正面方向
+  for (const f of faces) {
+    const a = verts[f[0]], b = verts[f[1]], c = verts[f[2]];
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+    const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    if (nx * a[0] + ny * a[1] + nz * a[2] < 0) {
+      const tmp = f[1];
+      f[1] = f[2];
+      f[2] = tmp;
+    }
+  }
+  return { verts, faces };
+}
+
+// 頭部靜止外形：單位方向 → 局部座標。上半部稍高、底部稍扁，導數連續所以沒有折痕
+function headShape(dx, dy, dz, out, o) {
+  out[o] = dx;
+  out[o + 1] = 0.93 * dy + 0.15 * dy * dy;
+  out[o + 2] = dz * 0.96;
+}
+
+
+// ---------------------------------------------------------------------
+// 2. 頭部：形狀匹配軟體（Meshless Shape Matching, Müller et al. 2005）
+//    162 個粒子；每一步找出「最接近目前形狀的剛體 + 線性變形」當目標，
+//    再把粒子往目標拉一部分（α）。α 越小越軟、晃越久。
+// ---------------------------------------------------------------------
+const FLOOR_Y = 0;
+const BOUNDS = 5.0;      // 場景牆壁（|x|、|z| 上限，單位：10 cm）
+const CEILING = 7.5;
+const HEAD_MASS = 1.0;
+
+// Möller–Trumbore 射線三角形相交；回傳 t（沒打到回傳 -1），bary 寫入 out
+function rayTri(ox, oy, oz, dx, dy, dz, ax, ay, az, bx, by, bz, cx, cy, cz, out) {
+  const e1x = bx - ax, e1y = by - ay, e1z = bz - az;
+  const e2x = cx - ax, e2y = cy - ay, e2z = cz - az;
+  const px = dy * e2z - dz * e2y, py = dz * e2x - dx * e2z, pz = dx * e2y - dy * e2x;
+  const det = e1x * px + e1y * py + e1z * pz;
+  if (Math.abs(det) < 1e-12) return -1;
+  const inv = 1 / det;
+  const sx = ox - ax, sy = oy - ay, sz = oz - az;
+  const u = (sx * px + sy * py + sz * pz) * inv;
+  if (u < -1e-6 || u > 1 + 1e-6) return -1;
+  const qx = sy * e1z - sz * e1y, qy = sz * e1x - sx * e1z, qz = sx * e1y - sy * e1x;
+  const v = (dx * qx + dy * qy + dz * qz) * inv;
+  if (v < -1e-6 || u + v > 1 + 1e-6) return -1;
+  const t = (e2x * qx + e2y * qy + e2z * qz) * inv;
+  if (out) { out[0] = 1 - u - v; out[1] = u; out[2] = v; }
+  return t;
+}
+
+class SoftHead {
+  constructor() {
+    const ico = icosphere(2);
+    const n = ico.verts.length; // 162
+    this.n = n;
+    this.faces = ico.faces;
+    this.dir = new Float32Array(n * 3);
+    const rest = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const d = ico.verts[i];
+      this.dir[i * 3] = d[0]; this.dir[i * 3 + 1] = d[1]; this.dir[i * 3 + 2] = d[2];
+      headShape(d[0], d[1], d[2], rest, i * 3);
+    }
+    // 靜止形狀的質心
+    let cx = 0, cy = 0, cz = 0;
+    for (let i = 0; i < n; i++) { cx += rest[i * 3]; cy += rest[i * 3 + 1]; cz += rest[i * 3 + 2]; }
+    this.c0 = [cx / n, cy / n, cz / n];
+    let minY = Infinity;
+    for (let i = 0; i < n; i++) minY = Math.min(minY, rest[i * 3 + 1]);
+    this.restMinY = minY - this.c0[1]; // 底部相對於質心的高度（負值）
+    // q_i：相對質心的靜止位置；Aqq = Σ q qᵀ
+    this.q = new Float32Array(n * 3);
+    const Aqq = new Float32Array(9);
+    for (let i = 0; i < n; i++) {
+      const qx = rest[i * 3] - this.c0[0], qy = rest[i * 3 + 1] - this.c0[1], qz = rest[i * 3 + 2] - this.c0[2];
+      this.q[i * 3] = qx; this.q[i * 3 + 1] = qy; this.q[i * 3 + 2] = qz;
+      Aqq[0] += qx * qx; Aqq[1] += qx * qy; Aqq[2] += qx * qz;
+      Aqq[3] += qy * qx; Aqq[4] += qy * qy; Aqq[5] += qy * qz;
+      Aqq[6] += qz * qx; Aqq[7] += qz * qy; Aqq[8] += qz * qz;
+    }
+    this.AqqInv = M3.inv(new Float32Array(9), Aqq);
+
+    this.x = new Float32Array(n * 3);   // 目前位置（求解中的預測位置）
+    this.x0 = new Float32Array(n * 3);  // 本步開始時的位置
+    this.v = new Float32Array(n * 3);
+    this.g = new Float32Array(n * 3);   // 形狀匹配目標
+    this.quat = new Float32Array([0, 0, 0, 1]);
+    this.R = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
+    this.T = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
+    this.c = new Float32Array(3);
+    this.vc = new Float32Array(3);      // 質心速度（給相機與音效用）
+    this.scale = 1;
+    this.w = n / HEAD_MASS;             // 每顆粒子的反質量
+    this.alpha = 0.1;
+    this.beta = 0.35;
+    this._A = new Float32Array(9);
+    this._L = new Float32Array(9);
+    this._b = new Float32Array(3);
+    // 抓取
+    this.grabIdx = [];
+    this.grabW = [];
+    this.grabOff = [];
+    this.grabbing = false;
+    this.grabTarget = new Float32Array(3);
+    this.impact = 0;
+    this.contact = 0;
+    this.reset(0, 0);
+  }
+
+  reset(px, pz) {
+    const n = this.n;
+    this.quat.set([0, 0, 0, 1]);
+    this.R.set([1, 0, 0, 0, 1, 0, 0, 0, 1]);
+    this.T.set(this.R);
+    const lift = -this.restMinY + 0.003;
+    for (let i = 0; i < n; i++) {
+      this.x[i * 3] = this.q[i * 3] + px;
+      this.x[i * 3 + 1] = this.q[i * 3 + 1] + lift;
+      this.x[i * 3 + 2] = this.q[i * 3 + 2] + pz;
+    }
+    this.x0.set(this.x);
+    this.g.set(this.x);
+    this.v.fill(0);
+    this.c[0] = px; this.c[1] = lift; this.c[2] = pz;
+    this.vc.fill(0);
+    this.grabbing = false;
+  }
+
+  // 找出單位方向 (dx,dy,dz) 落在哪個粗網格三角形上（重心座標），供細網格與觸手根部對應
+  locate(dx, dy, dz) {
+    const D = this.dir, out = this._b;
+    for (let f = 0; f < this.faces.length; f++) {
+      const [a, b, c] = this.faces[f];
+      const t = rayTri(0, 0, 0, dx, dy, dz,
+        D[a * 3], D[a * 3 + 1], D[a * 3 + 2], D[b * 3], D[b * 3 + 1], D[b * 3 + 2],
+        D[c * 3], D[c * 3 + 1], D[c * 3 + 2], out);
+      if (t > 0) {
+        const s = out[0] + out[1] + out[2];
+        return { f: [a, b, c], b: [out[0] / s, out[1] / s, out[2] / s] };
+      }
+    }
+    return { f: [0, 0, 0], b: [1, 0, 0] };
+  }
+
+  predict(dt, gravity) {
+    const n = this.n, x = this.x, v = this.v;
+    this.x0.set(x);
+    const damp = Math.exp(-0.9 * dt);
+    for (let i = 0; i < n; i++) {
+      const k = i * 3;
+      v[k + 1] -= gravity * dt;
+      v[k] *= damp; v[k + 1] *= damp; v[k + 2] *= damp;
+      x[k] += v[k] * dt; x[k + 1] += v[k + 1] * dt; x[k + 2] += v[k + 2] * dt;
+    }
+  }
+
+  // 形狀匹配：計算 c、R、T 與目標 g，並把粒子往目標拉 α
+  shapeMatch() {
+    const n = this.n, x = this.x, q = this.q, A = this._A, L = this._L, T = this.T, R = this.R;
+    let cx = 0, cy = 0, cz = 0;
+    for (let i = 0; i < n; i++) { cx += x[i * 3]; cy += x[i * 3 + 1]; cz += x[i * 3 + 2]; }
+    cx /= n; cy /= n; cz /= n;
+    this.c[0] = cx; this.c[1] = cy; this.c[2] = cz;
+    A.fill(0);
+    for (let i = 0; i < n; i++) {
+      const px = x[i * 3] - cx, py = x[i * 3 + 1] - cy, pz = x[i * 3 + 2] - cz;
+      const qx = q[i * 3], qy = q[i * 3 + 1], qz = q[i * 3 + 2];
+      A[0] += px * qx; A[1] += px * qy; A[2] += px * qz;
+      A[3] += py * qx; A[4] += py * qy; A[5] += py * qz;
+      A[6] += pz * qx; A[7] += pz * qy; A[8] += pz * qz;
+    }
+    R.set(extractRotation(A, this.quat, 8));
+    // 線性部分 A·Aqq⁻¹，除以 det^(1/3) 保持體積（被壓扁時會往旁邊鼓）
+    M3.mul(L, A, this.AqqInv);
+    const det = M3.det(L);
+    if (det > 0.05) {
+      const s = 1 / Math.cbrt(det);
+      for (let k = 0; k < 9; k++) L[k] *= s;
+    } else {
+      L.set(R);
+    }
+    const beta = this.beta;
+    for (let k = 0; k < 9; k++) T[k] = beta * L[k] + (1 - beta) * R[k];
+    const s = this.scale, a = this.alpha, g = this.g;
+    for (let i = 0; i < n; i++) {
+      const k = i * 3;
+      const qx = q[k] * s, qy = q[k + 1] * s, qz = q[k + 2] * s;
+      const gx = T[0] * qx + T[1] * qy + T[2] * qz + cx;
+      const gy = T[3] * qx + T[4] * qy + T[5] * qz + cy;
+      const gz = T[6] * qx + T[7] * qy + T[8] * qz + cz;
+      g[k] = gx; g[k + 1] = gy; g[k + 2] = gz;
+      x[k] += a * (gx - x[k]);
+      x[k + 1] += a * (gy - x[k + 1]);
+      x[k + 2] += a * (gz - x[k + 2]);
+    }
+  }
+
+  // 地板、牆壁與摩擦（mu 只在最後一次迭代給值，避免摩擦被重複套用而黏死）
+  collide(mu) {
+    const n = this.n, x = this.x, x0 = this.x0, v = this.v;
+    let contact = 0;
+    for (let i = 0; i < n; i++) {
+      const k = i * 3;
+      if (x[k + 1] < FLOOR_Y) {
+        // 剛碰到地板的粒子：記錄撞擊速度（播放「噗」聲、觸發壓扁）
+        if (x0[k + 1] > FLOOR_Y + 0.004) this.impact = Math.max(this.impact, -v[k + 1]);
+        x[k + 1] = FLOOR_Y;
+        if (mu > 0) {
+          const dx = x[k] - x0[k], dz = x[k + 2] - x0[k + 2];
+          if (dx * dx + dz * dz < 0.004 * 0.004) {
+            // 靜摩擦：太小的推力推不動（觸手伸向游標時，身體不會在地上慢慢滑走）
+            x[k] = x0[k]; x[k + 2] = x0[k + 2];
+          } else {
+            x[k] = x0[k] + dx * (1 - mu);
+            x[k + 2] = x0[k + 2] + dz * (1 - mu);
+          }
+        }
+        contact++;
+      }
+      if (x[k + 1] > CEILING) x[k + 1] = CEILING;
+      if (x[k] > BOUNDS) x[k] = BOUNDS; else if (x[k] < -BOUNDS) x[k] = -BOUNDS;
+      if (x[k + 2] > BOUNDS) x[k + 2] = BOUNDS; else if (x[k + 2] < -BOUNDS) x[k + 2] = -BOUNDS;
+    }
+    this.contact = contact;
+  }
+
+  applyGrab(k) {
+    if (!this.grabbing) return;
+    const x = this.x, G = this.grabTarget;
+    for (let j = 0; j < this.grabIdx.length; j++) {
+      const i = this.grabIdx[j] * 3, w = this.grabW[j] * k, o = this.grabOff[j];
+      x[i] += w * (G[0] + o[0] - x[i]);
+      x[i + 1] += w * (G[1] + o[1] - x[i + 1]);
+      x[i + 2] += w * (G[2] + o[2] - x[i + 2]);
+    }
+  }
+
+  finish(dt) {
+    const n = this.n, x = this.x, x0 = this.x0, v = this.v;
+    const inv = 1 / dt, vmax = 16;
+    let sx = 0, sy = 0, sz = 0;
+    for (let i = 0; i < n; i++) {
+      const k = i * 3;
+      let vx = (x[k] - x0[k]) * inv, vy = (x[k + 1] - x0[k + 1]) * inv, vz = (x[k + 2] - x0[k + 2]) * inv;
+      const sp = Math.hypot(vx, vy, vz);
+      if (sp > vmax) { const s = vmax / sp; vx *= s; vy *= s; vz *= s; }
+      v[k] = vx; v[k + 1] = vy; v[k + 2] = vz;
+      sx += vx; sy += vy; sz += vz;
+    }
+    this.vc[0] = sx / n; this.vc[1] = sy / n; this.vc[2] = sz / n;
+  }
+
+  // 世界座標點（相對質心的靜止座標 q + 粗網格重心座標）→ 目前變形後的位置
+  mapPoint(qx, qy, qz, f, b, out, o = 0) {
+    const T = this.T, s = this.scale, c = this.c, x = this.x, g = this.g;
+    qx *= s; qy *= s; qz *= s;
+    let px = T[0] * qx + T[1] * qy + T[2] * qz + c[0];
+    let py = T[3] * qx + T[4] * qy + T[5] * qz + c[1];
+    let pz = T[6] * qx + T[7] * qy + T[8] * qz + c[2];
+    for (let k = 0; k < 3; k++) {
+      const j = f[k] * 3, w = b[k];
+      px += w * (x[j] - g[j]);
+      py += w * (x[j + 1] - g[j + 1]);
+      pz += w * (x[j + 2] - g[j + 2]);
+    }
+    out[o] = px; out[o + 1] = py; out[o + 2] = pz;
+    return out;
+  }
+
+  // 觸手根部的修正量分攤到三顆頭部粒子（雙向耦合：拉觸手會把頭拖走）
+  pushPatch(f, b, dx, dy, dz) {
+    const x = this.x, w = this.w;
+    for (let k = 0; k < 3; k++) {
+      const j = f[k] * 3, s = w * b[k];
+      x[j] += s * dx; x[j + 1] += s * dy; x[j + 2] += s * dz;
+    }
+  }
+
+  startGrab(px, py, pz) {
+    const n = this.n, x = this.x, r2 = 0.62 * 0.62;
+    this.grabIdx = []; this.grabW = []; this.grabOff = [];
+    let best = -1, bestD = Infinity;
+    for (let i = 0; i < n; i++) {
+      const dx = x[i * 3] - px, dy = x[i * 3 + 1] - py, dz = x[i * 3 + 2] - pz;
+      const d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 < bestD) { bestD = d2; best = i; }
+      if (d2 < r2) {
+        const t = 1 - d2 / r2;
+        this.grabIdx.push(i); this.grabW.push(t * t); this.grabOff.push([dx, dy, dz]);
+      }
+    }
+    if (!this.grabIdx.length && best >= 0) {
+      this.grabIdx.push(best); this.grabW.push(1);
+      this.grabOff.push([x[best * 3] - px, x[best * 3 + 1] - py, x[best * 3 + 2] - pz]);
+    }
+    this.grabTarget[0] = px; this.grabTarget[1] = py; this.grabTarget[2] = pz;
+    this.grabbing = true;
+  }
+
+  // 戳一下：被點到的地方往內凹，之後自己彈回來
+  poke(px, py, pz, nx, ny, nz, strength) {
+    const n = this.n, x = this.x, v = this.v, r2 = 0.5 * 0.5;
+    for (let i = 0; i < n; i++) {
+      const dx = x[i * 3] - px, dy = x[i * 3 + 1] - py, dz = x[i * 3 + 2] - pz;
+      const d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 < r2) {
+        const t = 1 - d2 / r2, s = -strength * t * t;
+        v[i * 3] += nx * s; v[i * 3 + 1] += ny * s; v[i * 3 + 2] += nz * s;
+      }
+    }
+  }
+
+  // 整體加速度與旋轉（拋起來）
+  kick(vx, vy, vz, wx, wy, wz) {
+    const n = this.n, x = this.x, v = this.v, c = this.c;
+    for (let i = 0; i < n; i++) {
+      const k = i * 3;
+      const rx = x[k] - c[0], ry = x[k + 1] - c[1], rz = x[k + 2] - c[2];
+      v[k] += vx + (wy * rz - wz * ry);
+      v[k + 1] += vy + (wz * rx - wx * rz);
+      v[k + 2] += vz + (wx * ry - wy * rx);
+    }
+  }
+
+  // 黏人模式：頭往游標方向傾一點。力量正比於 q.y（相對質心的高度），總和為零 → 只有力矩、不會整隻滑走
+  lean(dx, dz, amount, dt) {
+    const n = this.n, v = this.v, q = this.q;
+    for (let i = 0; i < n; i++) {
+      const s = amount * q[i * 3 + 1] * dt;
+      v[i * 3] += dx * s; v[i * 3 + 2] += dz * s;
+    }
+  }
+}
+
+
+// ---------------------------------------------------------------------
+// 3. 觸手：PBD 粒子鏈（距離約束 + 方向性彎曲 + 長距離繫繩 + 碰撞）
+//    根部「黏」在頭部的三顆粒子上，修正量會分攤回頭部 → 雙向耦合
+// ---------------------------------------------------------------------
+const NT = 8;            // 觸手數
+const NP = 20;           // 每隻觸手的粒子數（index 0 是根部）
+const TENT_MASS = 0.07;  // 每隻觸手總質量（頭 = 1）
+const tRadius = (s) => 0.055 + 0.215 * Math.pow(1 - s, 1.25);
+
+class Tentacle {
+  constructor(k, head, rnd) {
+    this.k = k;
+    const ang = ((k + 0.5) / NT) * Math.PI * 2;
+    this.ang = ang;
+    this.L = 1.72 + (rnd() - 0.5) * 0.26;
+    this.seg = this.L / (NP - 1);
+    this.phase = rnd() * Math.PI * 2;
+    this.speed = 0.85 + rnd() * 0.3;
+    this.x = new Float32Array(NP * 3);
+    this.x0 = new Float32Array(NP * 3);
+    this.v = new Float32Array(NP * 3);
+    this.r = new Float32Array(NP);
+    this.w = new Float32Array(NP);
+    this.w0 = new Float32Array(NP);
+    let sum = 0;
+    for (let i = 0; i < NP; i++) { this.r[i] = tRadius(i / (NP - 1)); if (i > 0) sum += this.r[i] ** 2; }
+    for (let i = 1; i < NP; i++) this.w0[i] = sum / (TENT_MASS * this.r[i] ** 2); // 越粗越重
+    this.w.set(this.w0);
+
+    // 根部錨點：頭部靜止形狀下方一圈，往內縮 20% 讓觸手從頭裡長出來
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+    let dx = ca * 0.84, dy = -0.56, dz = sa * 0.84;
+    const l = Math.hypot(dx, dy, dz);
+    dx /= l; dy /= l; dz /= l;
+    const loc = head.locate(dx, dy, dz);
+    this.f = loc.f; this.b = loc.b;
+    const p = new Float32Array(3);
+    headShape(dx, dy, dz, p, 0);
+    this.qr = [p[0] * 0.8 - head.c0[0], p[1] * 0.8 - head.c0[1], p[2] * 0.8 - head.c0[2]];
+    this.wr = head.w * (loc.b[0] ** 2 + loc.b[1] ** 2 + loc.b[2] ** 2); // 根部的廣義反質量
+
+    // 根部切線（往外往下）與背側方向（頭部局部座標）
+    let tx = ca * 0.8, ty = -0.6, tz = sa * 0.8;
+    const tl = Math.hypot(tx, ty, tz);
+    this.tan0 = [tx / tl, ty / tl, tz / tl];
+    let ux = -this.tan0[0] * this.tan0[1], uy = 1 - this.tan0[1] * this.tan0[1], uz = -this.tan0[2] * this.tan0[1];
+    const ul = Math.hypot(ux, uy, uz);
+    this.dor0 = [ux / ul, uy / ul, uz / ul];
+
+    this.root = new Float32Array(3);
+    this.tan = new Float32Array(3);
+    this.dor = new Float32Array(3);
+    this.kb = new Float32Array(NP);
+    for (let i = 0; i < NP; i++) this.kb[i] = lerp(0.62, 0.24, i / (NP - 1));
+    this.kb[0] = 0.85;
+    this.ca = new Float32Array(NP); // 每個關節的目標捲曲角
+    this.sw = new Float32Array(NP); // 每個關節的左右擺動角
+    this.curl = 1;
+    // 黏人模式狀態
+    this.reach = 0;
+    this.attached = false;
+    this.cooldown = 0;
+    this.reachTarget = new Float32Array(3);
+    // 抓取狀態
+    this.grab = -1;
+    this.grabTarget = new Float32Array(3);
+  }
+
+  updateFrame(head) {
+    head.mapPoint(this.qr[0], this.qr[1], this.qr[2], this.f, this.b, this.root);
+    const R = head.R, t = this.tan0, d = this.dor0;
+    let tx = R[0] * t[0] + R[1] * t[1] + R[2] * t[2];
+    let ty = R[3] * t[0] + R[4] * t[1] + R[5] * t[2];
+    let tz = R[6] * t[0] + R[7] * t[1] + R[8] * t[2];
+    let l = Math.hypot(tx, ty, tz);
+    tx /= l; ty /= l; tz /= l;
+    let ux = R[0] * d[0] + R[1] * d[1] + R[2] * d[2];
+    let uy = R[3] * d[0] + R[4] * d[1] + R[5] * d[2];
+    let uz = R[6] * d[0] + R[7] * d[1] + R[8] * d[2];
+    const dd = ux * tx + uy * ty + uz * tz;
+    ux -= tx * dd; uy -= ty * dd; uz -= tz * dd;
+    l = Math.hypot(ux, uy, uz) || 1;
+    this.tan[0] = tx; this.tan[1] = ty; this.tan[2] = tz;
+    this.dor[0] = ux / l; this.dor[1] = uy / l; this.dor[2] = uz / l;
+  }
+
+  reset(head) {
+    this.updateFrame(head);
+    const x = this.x, root = this.root;
+    const ca = Math.cos(this.ang), sa = Math.sin(this.ang);
+    for (let i = 0; i < NP; i++) {
+      const s = i * this.seg * 0.97;
+      x[i * 3] = root[0] + ca * s;
+      x[i * 3 + 1] = Math.max(this.r[i] * 0.8 + 0.002, root[1] - s * 1.2);
+      x[i * 3 + 2] = root[2] + sa * s;
+    }
+    this.x0.set(x);
+    this.v.fill(0);
+    this.reach = 0; this.attached = false; this.cooldown = 0;
+    this.release();
+  }
+
+  // 每幀更新捲曲與擺動目標（觸手活力）
+  animate(time, lively) {
+    const ph = this.phase, sp = this.speed;
+    let curl = 1 + lively * (0.42 * Math.sin(time * 0.9 * sp + ph) + 0.18 * Math.sin(time * 2.3 * sp + ph * 1.7));
+    curl *= 1 - 1.3 * this.reach;          // 伸手去黏游標時把捲曲打開
+    this.curl = Math.max(-0.2, curl);
+    const sway = lively * 0.22 * (1 - 0.7 * this.reach);
+    for (let i = 0; i < NP; i++) {
+      const s = i / (NP - 1);
+      this.ca[i] = i === 0 ? 0 : this.curl * 0.58 * Math.pow(smooth(0.4, 1.0, s), 1.15);
+      this.sw[i] = i === 0 ? 0 : sway * Math.sin(time * 1.6 * sp + ph - s * 5.2) * s;
+    }
+  }
+
+  predict(dt, gravity) {
+    const x = this.x, v = this.v;
+    this.x0.set(x);
+    const damp = Math.exp(-0.5 * dt);
+    for (let i = 1; i < NP; i++) {
+      const k = i * 3;
+      v[k + 1] -= gravity * dt;
+      v[k] *= damp; v[k + 1] *= damp; v[k + 2] *= damp;
+      x[k] += v[k] * dt; x[k + 1] += v[k + 1] * dt; x[k + 2] += v[k + 2] * dt;
+    }
+  }
+
+  pin() {
+    const x = this.x;
+    if (this.grab >= 0) {
+      const g = this.grab * 3;
+      x[g] = this.grabTarget[0]; x[g + 1] = this.grabTarget[1]; x[g + 2] = this.grabTarget[2];
+    }
+    if (this.attached) {
+      const g = (NP - 1) * 3;
+      x[g] = this.reachTarget[0]; x[g + 1] = this.reachTarget[1]; x[g + 2] = this.reachTarget[2];
+    }
+  }
+
+  solve(head, last) {
+    const x = this.x, w = this.w, seg = this.seg, r = this.r;
+    this.updateFrame(head);
+    x[0] = this.root[0]; x[1] = this.root[1]; x[2] = this.root[2];
+    this.pin();
+
+    // 黏住游標時整隻變得比較能伸長：先被拉長，拉太遠才「啵」一聲彈開
+    const soft = this.attached ? 0.3 : 1;
+    // (1) 方向性彎曲：沿著觸手平行傳遞「背側」方向，往背側捲 → 尖端向上捲，露出淺色腹側
+    let ux = this.dor[0], uy = this.dor[1], uz = this.dor[2];
+    let dx = this.tan[0], dy = this.tan[1], dz = this.tan[2];
+    for (let i = 0; i < NP - 1; i++) {
+      const a = i * 3, b = a + 3;
+      if (i > 0) {
+        dx = x[a] - x[a - 3]; dy = x[a + 1] - x[a - 2]; dz = x[a + 2] - x[a - 1];
+        const dl = Math.hypot(dx, dy, dz) || 1;
+        dx /= dl; dy /= dl; dz /= dl;
+        const du = ux * dx + uy * dy + uz * dz;
+        ux -= dx * du; uy -= dy * du; uz -= dz * du;
+        const ul = Math.hypot(ux, uy, uz) || 1;
+        ux /= ul; uy /= ul; uz /= ul;
+      }
+      if (w[i + 1] === 0) continue;
+      const ang = this.ca[i], s = Math.sin(this.sw[i]);
+      const c1 = Math.cos(ang), s1 = Math.sin(ang);
+      const sx = dy * uz - dz * uy, sy = dz * ux - dx * uz, sz = dx * uy - dy * ux;
+      let tx = dx * c1 + ux * s1 + sx * s, ty = dy * c1 + uy * s1 + sy * s, tz = dz * c1 + uz * s1 + sz * s;
+      const tl = Math.hypot(tx, ty, tz) || 1;
+      // 修正量依反質量分給子、父兩顆粒子（動量守恆），整隻章魚才不會自己在地上漂移
+      const wa = i === 0 ? this.wr : w[i], wb = w[i + 1], ws = wa + wb;
+      const k = this.kb[i] * soft / ws;
+      const ex = x[a] + (tx / tl) * seg - x[b];
+      const ey = x[a + 1] + (ty / tl) * seg - x[b + 1];
+      const ez = x[a + 2] + (tz / tl) * seg - x[b + 2];
+      x[b] += k * wb * ex; x[b + 1] += k * wb * ey; x[b + 2] += k * wb * ez;
+      if (i === 0) {
+        head.pushPatch(this.f, this.b, -k * ex, -k * ey, -k * ez);
+        x[0] -= k * wa * ex; x[1] -= k * wa * ey; x[2] -= k * wa * ez;
+      } else if (wa > 0) {
+        x[a] -= k * wa * ex; x[a + 1] -= k * wa * ey; x[a + 2] -= k * wa * ez;
+      }
+    }
+
+    // (2) 距離約束；i = 0 時根部用廣義質量，修正量推回頭部
+    for (let i = 0; i < NP - 1; i++) {
+      const a = i * 3, b = a + 3;
+      const ex = x[b] - x[a], ey = x[b + 1] - x[a + 1], ez = x[b + 2] - x[a + 2];
+      const d = Math.hypot(ex, ey, ez);
+      if (d < 1e-9) continue;
+      // 黏住時根部當成「很重」：先拉長觸手，而不是把整隻章魚拖著走
+      const wa = i === 0 ? this.wr * (this.attached ? 0.12 : 1) : w[i], wb = w[i + 1];
+      const ws = wa + wb;
+      if (ws <= 0) continue;
+      const lam = ((d - seg) / ws / d) * soft;
+      if (i === 0) {
+        const hs = wa / this.wr;   // 頭部實際移動量要和根部一致
+        head.pushPatch(this.f, this.b, ex * lam * hs, ey * lam * hs, ez * lam * hs);
+      }
+      if (wa > 0) { x[a] += wa * ex * lam; x[a + 1] += wa * ey * lam; x[a + 2] += wa * ez * lam; }
+      if (wb > 0) { x[b] -= wb * ex * lam; x[b + 1] -= wb * ey * lam; x[b + 2] -= wb * ez * lam; }
+    }
+
+    // (3) 長距離繫繩（LRA）：拉尖端時力量直接傳到頭，觸手不會被拉成麵條
+    for (let i = 3; i < NP; i++) {
+      const a = i * 3;
+      const ex = x[a] - x[0], ey = x[a + 1] - x[1], ez = x[a + 2] - x[2];
+      const d = Math.hypot(ex, ey, ez), maxL = i * seg * (this.attached ? 1.4 : 1.05);
+      if (d <= maxL) continue;
+      const wr = this.wr * (this.attached ? 0.12 : 1);
+      const wb = w[i], ws = wr + wb;
+      const lam = ((d - maxL) / ws / d) * 0.6;
+      const hs = wr / this.wr;
+      head.pushPatch(this.f, this.b, ex * lam * hs, ey * lam * hs, ez * lam * hs);
+      x[0] += wr * ex * lam; x[1] += wr * ey * lam; x[2] += wr * ez * lam;
+      if (wb > 0) { x[a] -= wb * ex * lam; x[a + 1] -= wb * ey * lam; x[a + 2] -= wb * ez * lam; }
+    }
+
+    // (4) 自身碰撞：捲起來的尖端不會穿過自己
+    for (let i = 4; i < NP; i++) {
+      for (let j = i + 4; j < NP; j++) {
+        const a = i * 3, b = j * 3;
+        const ex = x[b] - x[a], ey = x[b + 1] - x[a + 1], ez = x[b + 2] - x[a + 2];
+        const minD = (r[i] + r[j]) * 0.95;
+        const d2 = ex * ex + ey * ey + ez * ez;
+        if (d2 >= minD * minD || d2 < 1e-12) continue;
+        const d = Math.sqrt(d2), wa = w[i], wb = w[j], ws = wa + wb;
+        if (ws <= 0) continue;
+        const lam = (d - minD) / ws / d;
+        x[a] += wa * ex * lam; x[a + 1] += wa * ey * lam; x[a + 2] += wa * ez * lam;
+        x[b] -= wb * ex * lam; x[b + 1] -= wb * ey * lam; x[b + 2] -= wb * ez * lam;
+      }
+    }
+
+    // (5) 頭部（近似橢球）與地板
+    const c = head.c;
+    const mu = last ? 0.38 : 0;
+    for (let i = 1; i < NP; i++) {
+      const a = i * 3;
+      if (w[i] === 0) continue;
+      if (i >= 5) {
+        const rr = r[i] * 0.85;
+        const px = x[a] - c[0], py = x[a + 1] - c[1] - 0.1, pz = x[a + 2] - c[2];
+        const e = Math.hypot(px / (1.0 + rr), py / (0.95 + rr), pz / (0.97 + rr));
+        if (e < 1 && e > 1e-6) {
+          x[a] = c[0] + px / e; x[a + 1] = c[1] + 0.1 + py / e; x[a + 2] = c[2] + pz / e;
+        }
+      }
+      const floor = FLOOR_Y + r[i] * 0.8;
+      if (x[a + 1] < floor) {
+        x[a + 1] = floor;
+        if (mu > 0) {
+          x[a] = this.x0[a] + (x[a] - this.x0[a]) * (1 - mu);
+          x[a + 2] = this.x0[a + 2] + (x[a + 2] - this.x0[a + 2]) * (1 - mu);
+        }
+      }
+      if (x[a + 1] > CEILING) x[a + 1] = CEILING;
+      if (x[a] > BOUNDS) x[a] = BOUNDS; else if (x[a] < -BOUNDS) x[a] = -BOUNDS;
+      if (x[a + 2] > BOUNDS) x[a + 2] = BOUNDS; else if (x[a + 2] < -BOUNDS) x[a + 2] = -BOUNDS;
+    }
+    this.pin();
+  }
+
+  finish(dt) {
+    const x = this.x, x0 = this.x0, v = this.v, inv = 1 / dt, vmax = 16;
+    for (let i = 1; i < NP; i++) {
+      const k = i * 3;
+      let vx = (x[k] - x0[k]) * inv, vy = (x[k + 1] - x0[k + 1]) * inv, vz = (x[k + 2] - x0[k + 2]) * inv;
+      const sp = Math.hypot(vx, vy, vz);
+      if (sp > vmax) { const s = vmax / sp; vx *= s; vy *= s; vz *= s; }
+      v[k] = vx; v[k + 1] = vy; v[k + 2] = vz;
+    }
+  }
+
+  startGrab(i, px, py, pz) {
+    this.release();
+    this.grab = clamp(i, 2, NP - 1);
+    this.w[this.grab] = 0;
+    this.grabTarget[0] = px; this.grabTarget[1] = py; this.grabTarget[2] = pz;
+  }
+
+  release() {
+    this.grab = -1;
+    this.w.set(this.w0);
+    if (this.attached) this.w[NP - 1] = 0;
+  }
+
+  attach(px, py, pz) {
+    this.attached = true;
+    this.reachTarget[0] = px; this.reachTarget[1] = py; this.reachTarget[2] = pz;
+    this.w[NP - 1] = 0;
+  }
+
+  detach(cooldown) {
+    if (!this.attached) return;
+    this.attached = false;
+    this.cooldown = cooldown;
+    if (this.grab !== NP - 1) this.w[NP - 1] = this.w0[NP - 1];
+    // 「啵」一聲彈開：尖端往根部回彈
+    const t = (NP - 1) * 3;
+    const ex = this.x[0] - this.x[t], ey = this.x[1] - this.x[t + 1] + 0.6, ez = this.x[2] - this.x[t + 2];
+    const l = Math.hypot(ex, ey, ez) || 1;
+    for (let i = NP - 4; i < NP; i++) {
+      const s = (i - (NP - 5)) * 0.9;
+      this.v[i * 3] += (ex / l) * s; this.v[i * 3 + 1] += (ey / l) * s; this.v[i * 3 + 2] += (ez / l) * s;
+    }
+  }
+
+  flick(i0, strength) {
+    for (let i = 1; i < NP; i++) {
+      const fall = Math.exp(-((i - i0) ** 2) / 8);
+      this.v[i * 3 + 1] += strength * fall;
+    }
+  }
+
+  kick(vx, vy, vz) {
+    for (let i = 1; i < NP; i++) {
+      this.v[i * 3] += vx; this.v[i * 3 + 1] += vy; this.v[i * 3 + 2] += vz;
+    }
+  }
+}
+
+// 觸手之間互相推開（只檢查包圍盒重疊的配對）
+function collideTentacles(tents) {
+  const lo = collideTentacles._lo, hi = collideTentacles._hi;
+  for (let t = 0; t < tents.length; t++) {
+    const x = tents[t].x;
+    let ax = Infinity, ay = Infinity, az = Infinity, bx = -Infinity, by = -Infinity, bz = -Infinity;
+    for (let i = 3; i < NP; i++) {
+      const k = i * 3;
+      ax = Math.min(ax, x[k]); ay = Math.min(ay, x[k + 1]); az = Math.min(az, x[k + 2]);
+      bx = Math.max(bx, x[k]); by = Math.max(by, x[k + 1]); bz = Math.max(bz, x[k + 2]);
+    }
+    lo[t * 3] = ax - 0.3; lo[t * 3 + 1] = ay - 0.3; lo[t * 3 + 2] = az - 0.3;
+    hi[t * 3] = bx + 0.3; hi[t * 3 + 1] = by + 0.3; hi[t * 3 + 2] = bz + 0.3;
+  }
+  for (let p = 0; p < tents.length; p++) {
+    for (let q = p + 1; q < tents.length; q++) {
+      if (lo[p * 3] > hi[q * 3] || lo[q * 3] > hi[p * 3] ||
+          lo[p * 3 + 1] > hi[q * 3 + 1] || lo[q * 3 + 1] > hi[p * 3 + 1] ||
+          lo[p * 3 + 2] > hi[q * 3 + 2] || lo[q * 3 + 2] > hi[p * 3 + 2]) continue;
+      const A = tents[p], B = tents[q];
+      const xa = A.x, xb = B.x;
+      for (let i = 3; i < NP; i++) {
+        for (let j = 3; j < NP; j++) {
+          const a = i * 3, b = j * 3;
+          const ex = xb[b] - xa[a], ey = xb[b + 1] - xa[a + 1], ez = xb[b + 2] - xa[a + 2];
+          const minD = (A.r[i] + B.r[j]) * 0.92;
+          const d2 = ex * ex + ey * ey + ez * ez;
+          if (d2 >= minD * minD || d2 < 1e-12) continue;
+          const d = Math.sqrt(d2), wa = A.w[i], wb = B.w[j], ws = wa + wb;
+          if (ws <= 0) continue;
+          const lam = (d - minD) / ws / d;
+          xa[a] += wa * ex * lam; xa[a + 1] += wa * ey * lam; xa[a + 2] += wa * ez * lam;
+          xb[b] -= wb * ex * lam; xb[b + 1] -= wb * ey * lam; xb[b + 2] -= wb * ez * lam;
+        }
+      }
+    }
+  }
+}
+collideTentacles._lo = new Float32Array(NT * 3);
+collideTentacles._hi = new Float32Array(NT * 3);
+
+
+// ---------------------------------------------------------------------
+// 4. 渲染網格（每幀在 CPU 重建：頭部由物理粒子插值，觸手是沿樣條掃出的扁管）
+//    動態頂點格式：pos(3) nor(3) comb(3)；靜態：rest(3) aux(4) suck(1)
+// ---------------------------------------------------------------------
+const DYN = 9, STA = 8;
+const EYE_DIRS = [[-0.33, 0.02, 0.94], [0.33, 0.02, 0.94]].map((d) => {
+  const l = Math.hypot(d[0], d[1], d[2]);
+  return [d[0] / l, d[1] / l, d[2] / l];
+});
+
+const MOUTH_DIR = (() => {
+  const d = [0, -0.19, 0.98], l = Math.hypot(d[0], d[1], d[2]);
+  return [d[0] / l, d[1] / l, d[2] / l];
+})();
+
+class HeadMesh {
+  constructor(head) {
+    const ico = icosphere(4);
+    const n = ico.verts.length; // 2562
+    this.n = n;
+    this.nf = ico.faces.length;
+    this.index = new Uint16Array(this.nf * 3);
+    ico.faces.forEach((f, i) => this.index.set(f, i * 3));
+    this.qf = new Float32Array(n * 3);
+    this.fi = new Int32Array(n * 3);
+    this.bw = new Float32Array(n * 3);
+    this.stat = new Float32Array(n * STA);
+    this.dyn = new Float32Array(n * DYN);
+    this.pos = new Float32Array(n * 3);
+    this.nor = new Float32Array(n * 3);
+    this.combRest = new Float32Array(n * 3);  // 梳理方向，存在頭部「靜止座標」裡，跟著頭轉
+    this.restNor = new Float32Array(n * 3);
+    this._dev = new Float32Array(head.n * 3);
+    const tmp = new Float32Array(3);
+    const rest = new Float32Array(n * 3);
+    for (let v = 0; v < n; v++) {
+      const d = ico.verts[v];
+      headShape(d[0], d[1], d[2], tmp, 0);
+      rest.set(tmp, v * 3);
+      this.qf[v * 3] = tmp[0] - head.c0[0];
+      this.qf[v * 3 + 1] = tmp[1] - head.c0[1];
+      this.qf[v * 3 + 2] = tmp[2] - head.c0[2];
+      const loc = head.locate(d[0], d[1], d[2]);
+      this.fi.set(loc.f, v * 3);
+      this.bw.set(loc.b, v * 3);
+      const o = v * STA;
+      this.stat[o] = tmp[0]; this.stat[o + 1] = tmp[1]; this.stat[o + 2] = tmp[2];
+      this.stat[o + 3] = d[0]; this.stat[o + 4] = d[1]; this.stat[o + 5] = d[2];
+      this.stat[o + 6] = 0; this.stat[o + 7] = 0;
+    }
+    computeNormals(rest, this.index, this.restNor);
+    // 眼睛與嘴巴的錨點：離指定方向最近的頂點
+    this.eyeIdx = EYE_DIRS.map((e) => {
+      let best = 0, bd = -2;
+      for (let v = 0; v < n; v++) {
+        const dd = ico.verts[v][0] * e[0] + ico.verts[v][1] * e[1] + ico.verts[v][2] * e[2];
+        if (dd > bd) { bd = dd; best = v; }
+      }
+      return best;
+    });
+    this.mouthIdx = this.eyeIdx.length ? nearestDir(ico.verts, MOUTH_DIR) : 0;
+  }
+
+  update(head) {
+    const n = this.n, T = head.T, R = head.R, s = head.scale, c = head.c, x = head.x, g = head.g;
+    const dev = this._dev;
+    for (let i = 0; i < head.n * 3; i++) dev[i] = x[i] - g[i];
+    const pos = this.pos, qf = this.qf, fi = this.fi, bw = this.bw;
+    for (let v = 0; v < n; v++) {
+      const k = v * 3;
+      const qx = qf[k] * s, qy = qf[k + 1] * s, qz = qf[k + 2] * s;
+      let px = T[0] * qx + T[1] * qy + T[2] * qz + c[0];
+      let py = T[3] * qx + T[4] * qy + T[5] * qz + c[1];
+      let pz = T[6] * qx + T[7] * qy + T[8] * qz + c[2];
+      for (let m = 0; m < 3; m++) {
+        const j = fi[k + m] * 3, w = bw[k + m];
+        px += w * dev[j]; py += w * dev[j + 1]; pz += w * dev[j + 2];
+      }
+      pos[k] = px; pos[k + 1] = py; pos[k + 2] = pz;
+    }
+    computeNormals(pos, this.index, this.nor);
+    const dyn = this.dyn, nor = this.nor, cr = this.combRest;
+    for (let v = 0; v < n; v++) {
+      const k = v * 3, o = v * DYN;
+      dyn[o] = pos[k]; dyn[o + 1] = pos[k + 1]; dyn[o + 2] = pos[k + 2];
+      dyn[o + 3] = nor[k]; dyn[o + 4] = nor[k + 1]; dyn[o + 5] = nor[k + 2];
+      const cx = cr[k], cy = cr[k + 1], cz = cr[k + 2];
+      dyn[o + 6] = R[0] * cx + R[1] * cy + R[2] * cz;
+      dyn[o + 7] = R[3] * cx + R[4] * cy + R[5] * cz;
+      dyn[o + 8] = R[6] * cx + R[7] * cy + R[8] * cz;
+    }
+  }
+}
+
+function nearestDir(verts, e) {
+  let best = 0, bd = -2;
+  for (let v = 0; v < verts.length; v++) {
+    const dd = verts[v][0] * e[0] + verts[v][1] * e[1] + verts[v][2] * e[2];
+    if (dd > bd) { bd = dd; best = v; }
+  }
+  return best;
+}
+
+function computeNormals(pos, index, out) {
+  out.fill(0);
+  for (let f = 0; f < index.length; f += 3) {
+    const a = index[f] * 3, b = index[f + 1] * 3, c = index[f + 2] * 3;
+    const ux = pos[b] - pos[a], uy = pos[b + 1] - pos[a + 1], uz = pos[b + 2] - pos[a + 2];
+    const vx = pos[c] - pos[a], vy = pos[c + 1] - pos[a + 1], vz = pos[c + 2] - pos[a + 2];
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    out[a] += nx; out[a + 1] += ny; out[a + 2] += nz;
+    out[b] += nx; out[b + 1] += ny; out[b + 2] += nz;
+    out[c] += nx; out[c + 1] += ny; out[c + 2] += nz;
+  }
+  for (let i = 0; i < out.length; i += 3) {
+    const l = Math.hypot(out[i], out[i + 1], out[i + 2]) || 1;
+    out[i] /= l; out[i + 1] /= l; out[i + 2] /= l;
+  }
+}
+
+// ---- 觸手扁管 ----
+const RINGS = 48, CAP = 6, SIDES = 14, RV = SIDES + 1, TR = RINGS + CAP, TV = TR * RV;
+const FLAT = 0.8; // 截面上下扁（背腹方向）
+
+class TentacleMesh {
+  constructor(tents) {
+    const total = NT * TV;
+    this.count = total;
+    this.dyn = new Float32Array(total * DYN);
+    this.stat = new Float32Array(total * STA);
+    this.pos = new Float32Array(total * 3);
+    this.comb = new Float32Array(total * 2);         // (沿觸手, 繞觸手) 兩個分量
+    this.ringC = new Float32Array(NT * TR * 3);
+    this.ringT = new Float32Array(NT * TR * 3);
+    this.ringN = new Float32Array(NT * TR * 3);
+    this.ringB = new Float32Array(NT * TR * 3);
+    this.ringR = new Float32Array(NT * TR);
+    this.bound = new Float32Array(NT * 4);           // 每隻觸手的包圍球（拾取加速）
+    const idx = [];
+    for (let k = 0; k < NT; k++) {
+      const base = k * TV;
+      for (let j = 0; j < TR - 1; j++) {
+        for (let s = 0; s < SIDES; s++) {
+          const a = base + j * RV + s, b = a + 1, c = a + RV, d = c + 1;
+          idx.push(a, b, c, b, d, c);
+        }
+      }
+    }
+    this.index = new Uint16Array(idx);
+    // 靜態屬性
+    for (let k = 0; k < NT; k++) {
+      const L = tents[k].L;
+      let suck = 0;
+      for (let j = 0; j < TR; j++) {
+        let s, rr, along;
+        if (j < RINGS) {
+          s = j / (RINGS - 1);
+          rr = tRadius(s);
+          along = L * s;
+          if (j > 0) {
+            const sp = (j - 1) / (RINGS - 1);
+            suck += (L * (s - sp)) / (0.8 * tRadius((s + sp) * 0.5)); // 吸盤間距與半徑成正比
+          }
+        } else {
+          const th = ((j - RINGS + 1) / CAP) * Math.PI * 0.5;
+          const rt = tRadius(1);
+          s = 1 + 0.03 * Math.sin(th);
+          rr = rt * Math.cos(th);
+          along = L + rt * Math.sin(th);
+        }
+        for (let sd = 0; sd < RV; sd++) {
+          const ph = (sd / SIDES) * Math.PI * 2;
+          const cp = Math.cos(ph), sp = Math.sin(ph);
+          const o = (k * TV + j * RV + sd) * STA;
+          this.stat[o] = along + k * 7.31;
+          this.stat[o + 1] = cp * rr * FLAT;
+          this.stat[o + 2] = sp * rr;
+          this.stat[o + 3] = s;
+          this.stat[o + 4] = cp;
+          this.stat[o + 5] = sp;
+          this.stat[o + 6] = tRadius(Math.min(s, 1));
+          this.stat[o + 7] = suck;
+        }
+      }
+    }
+    this._P = new Float32Array((NP + 2) * 3);
+  }
+
+  update(tents) {
+    const dyn = this.dyn, pos = this.pos, comb = this.comb;
+    const C = this.ringC, Tn = this.ringT, Nn = this.ringN, Bn = this.ringB, Rr = this.ringR;
+    const P = this._P;
+    for (let k = 0; k < NT; k++) {
+      const tent = tents[k], x = tent.x;
+      // 端點外插，讓 Catmull-Rom 能經過第一和最後一顆粒子
+      P.set(x, 3);
+      for (let a = 0; a < 3; a++) {
+        P[a] = 2 * x[a] - x[3 + a];
+        P[(NP + 1) * 3 + a] = 2 * x[(NP - 1) * 3 + a] - x[(NP - 2) * 3 + a];
+      }
+      const rb = k * TR;
+      // (1) 環中心與切線
+      for (let j = 0; j < RINGS; j++) {
+        const u = (j / (RINGS - 1)) * (NP - 1);
+        const i = Math.min(Math.floor(u), NP - 2), t = u - i;
+        const t2 = t * t, t3 = t2 * t;
+        const o = (rb + j) * 3;
+        for (let a = 0; a < 3; a++) {
+          const p0 = P[i * 3 + a], p1 = P[(i + 1) * 3 + a], p2 = P[(i + 2) * 3 + a], p3 = P[(i + 3) * 3 + a];
+          C[o + a] = 0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
+          Tn[o + a] = 0.5 * ((-p0 + p2) + 2 * (2 * p0 - 5 * p1 + 4 * p2 - p3) * t + 3 * (-p0 + 3 * p1 - 3 * p2 + p3) * t2);
+        }
+        const l = Math.hypot(Tn[o], Tn[o + 1], Tn[o + 2]) || 1;
+        Tn[o] /= l; Tn[o + 1] /= l; Tn[o + 2] /= l;
+        Rr[rb + j] = tRadius(j / (RINGS - 1));
+      }
+      // (2) 旋轉最小化標架（double reflection），起點用觸手的背側方向
+      {
+        const o = rb * 3, d = tent.dor;
+        const dd = d[0] * Tn[o] + d[1] * Tn[o + 1] + d[2] * Tn[o + 2];
+        let nx = d[0] - Tn[o] * dd, ny = d[1] - Tn[o + 1] * dd, nz = d[2] - Tn[o + 2] * dd;
+        const l = Math.hypot(nx, ny, nz) || 1;
+        Nn[o] = nx / l; Nn[o + 1] = ny / l; Nn[o + 2] = nz / l;
+      }
+      for (let j = 0; j < RINGS - 1; j++) {
+        const o = (rb + j) * 3, o1 = o + 3;
+        const v1x = C[o1] - C[o], v1y = C[o1 + 1] - C[o + 1], v1z = C[o1 + 2] - C[o + 2];
+        const c1 = v1x * v1x + v1y * v1y + v1z * v1z;
+        let rx = Nn[o], ry = Nn[o + 1], rz = Nn[o + 2];
+        if (c1 > 1e-12) {
+          let k1 = (2 / c1) * (v1x * rx + v1y * ry + v1z * rz);
+          const rLx = rx - k1 * v1x, rLy = ry - k1 * v1y, rLz = rz - k1 * v1z;
+          k1 = (2 / c1) * (v1x * Tn[o] + v1y * Tn[o + 1] + v1z * Tn[o + 2]);
+          const tLx = Tn[o] - k1 * v1x, tLy = Tn[o + 1] - k1 * v1y, tLz = Tn[o + 2] - k1 * v1z;
+          const v2x = Tn[o1] - tLx, v2y = Tn[o1 + 1] - tLy, v2z = Tn[o1 + 2] - tLz;
+          const c2 = v2x * v2x + v2y * v2y + v2z * v2z;
+          if (c2 > 1e-12) {
+            const k2 = (2 / c2) * (v2x * rLx + v2y * rLy + v2z * rLz);
+            rx = rLx - k2 * v2x; ry = rLy - k2 * v2y; rz = rLz - k2 * v2z;
+          } else { rx = rLx; ry = rLy; rz = rLz; }
+        }
+        const dd = rx * Tn[o1] + ry * Tn[o1 + 1] + rz * Tn[o1 + 2];
+        rx -= Tn[o1] * dd; ry -= Tn[o1 + 1] * dd; rz -= Tn[o1 + 2] * dd;
+        const l = Math.hypot(rx, ry, rz) || 1;
+        Nn[o1] = rx / l; Nn[o1 + 1] = ry / l; Nn[o1 + 2] = rz / l;
+      }
+      // (3) 尖端圓帽：沿最後切線延伸、半徑收成 0
+      const last = (rb + RINGS - 1) * 3, rt = Rr[rb + RINGS - 1];
+      for (let c = 1; c <= CAP; c++) {
+        const th = (c / CAP) * Math.PI * 0.5, o = (rb + RINGS - 1 + c) * 3;
+        for (let a = 0; a < 3; a++) {
+          C[o + a] = C[last + a] + Tn[last + a] * rt * Math.sin(th) * 0.95;
+          Tn[o + a] = Tn[last + a];
+          Nn[o + a] = Nn[last + a];
+        }
+        Rr[rb + RINGS - 1 + c] = rt * Math.cos(th);
+      }
+      for (let j = 0; j < TR; j++) {
+        const o = (rb + j) * 3;
+        Bn[o] = Tn[o + 1] * Nn[o + 2] - Tn[o + 2] * Nn[o + 1];
+        Bn[o + 1] = Tn[o + 2] * Nn[o] - Tn[o] * Nn[o + 2];
+        Bn[o + 2] = Tn[o] * Nn[o + 1] - Tn[o + 1] * Nn[o];
+      }
+      // (4) 頂點：扁橢圓截面
+      let bx = 0, by = 0, bz = 0;
+      for (let j = 0; j < TR; j++) {
+        const o = (rb + j) * 3, r = Rr[rb + j];
+        let slope = 0, capMix = 0;
+        if (j < RINGS) {
+          const j0 = Math.max(j - 1, 0), j1 = Math.min(j + 1, RINGS - 1);
+          const dl = Math.hypot(C[(rb + j1) * 3] - C[(rb + j0) * 3], C[(rb + j1) * 3 + 1] - C[(rb + j0) * 3 + 1], C[(rb + j1) * 3 + 2] - C[(rb + j0) * 3 + 2]);
+          slope = dl > 1e-6 ? (Rr[rb + j1] - Rr[rb + j0]) / dl : 0;
+        } else {
+          capMix = (j - RINGS + 1) / CAP;
+        }
+        const th = capMix * Math.PI * 0.5, cth = Math.cos(th), sth = Math.sin(th);
+        for (let s = 0; s < RV; s++) {
+          const ph = (s / SIDES) * Math.PI * 2, cp = Math.cos(ph), sp = Math.sin(ph);
+          const v = k * TV + j * RV + s, q = v * DYN, p = v * 3;
+          const ex = Nn[o] * cp * FLAT + Bn[o] * sp, ey = Nn[o + 1] * cp * FLAT + Bn[o + 1] * sp, ez = Nn[o + 2] * cp * FLAT + Bn[o + 2] * sp;
+          const px = C[o] + ex * r, py = C[o + 1] + ey * r, pz = C[o + 2] + ez * r;
+          // 橢圓的法線 + 錐度修正；圓帽處往切線方向彎
+          let nx = Nn[o] * cp / FLAT + Bn[o] * sp, ny = Nn[o + 1] * cp / FLAT + Bn[o + 1] * sp, nz = Nn[o + 2] * cp / FLAT + Bn[o + 2] * sp;
+          let l = Math.hypot(nx, ny, nz) || 1;
+          nx = nx / l * cth + Tn[o] * (sth - slope); ny = ny / l * cth + Tn[o + 1] * (sth - slope); nz = nz / l * cth + Tn[o + 2] * (sth - slope);
+          l = Math.hypot(nx, ny, nz) || 1;
+          pos[p] = px; pos[p + 1] = py; pos[p + 2] = pz;
+          dyn[q] = px; dyn[q + 1] = py; dyn[q + 2] = pz;
+          dyn[q + 3] = nx / l; dyn[q + 4] = ny / l; dyn[q + 5] = nz / l;
+          // 梳理方向：沿觸手 * T + 繞觸手 * 環向切線；再加一點順著尖端的自然倒向
+          const ca = comb[v * 2] + 0.16, cb = comb[v * 2 + 1];
+          let ax = -Nn[o] * sp * FLAT + Bn[o] * cp, ay = -Nn[o + 1] * sp * FLAT + Bn[o + 1] * cp, az = -Nn[o + 2] * sp * FLAT + Bn[o + 2] * cp;
+          l = Math.hypot(ax, ay, az) || 1;
+          dyn[q + 6] = Tn[o] * ca + (ax / l) * cb;
+          dyn[q + 7] = Tn[o + 1] * ca + (ay / l) * cb;
+          dyn[q + 8] = Tn[o + 2] * ca + (az / l) * cb;
+          bx += px; by += py; bz += pz;
+        }
+      }
+      // 包圍球
+      const inv = 1 / (TR * RV);
+      bx *= inv; by *= inv; bz *= inv;
+      let br = 0;
+      for (let j = 0; j < TR; j += 4) {
+        const o = (rb + j) * 3;
+        br = Math.max(br, Math.hypot(C[o] - bx, C[o + 1] - by, C[o + 2] - bz) + Rr[rb + j]);
+      }
+      this.bound[k * 4] = bx; this.bound[k * 4 + 1] = by; this.bound[k * 4 + 2] = bz; this.bound[k * 4 + 3] = br + 0.15;
+    }
+  }
+}
+
+
+// ---------------------------------------------------------------------
+// 5. 著色器（GLSL ES 3.00）
+// ---------------------------------------------------------------------
+const GLSL_COMMON = /* glsl */ `
+// Khronos PBR Neutral 色調映射：粉嫩的顏色不會被壓成橘色
+vec3 tonemap(vec3 color) {
+  const float startCompression = 0.8 - 0.04;
+  const float desaturation = 0.15;
+  float x = min(color.r, min(color.g, color.b));
+  float offset = x < 0.08 ? x - 6.25 * x * x : 0.04;
+  color -= offset;
+  float peak = max(color.r, max(color.g, color.b));
+  if (peak < startCompression) return color;
+  float d = 1.0 - startCompression;
+  float newPeak = 1.0 - d * d / (peak + d - startCompression);
+  color *= newPeak / peak;
+  float g = 1.0 - 1.0 / (desaturation * (peak - newPeak) + 1.0);
+  return mix(color, vec3(newPeak), g);
+}
+vec3 toSRGB(vec3 c) {
+  c = clamp(c, 0.0, 1.0);
+  return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c));
+}
+`;
+
+// 殼層毛髮：同一個網格畫 N+1 次（instancing），第 i 層沿法線推出 i/N 倍毛長
+const FUR_VS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec3 aNor;
+layout(location = 2) in vec3 aComb;
+layout(location = 3) in vec3 aRest;
+layout(location = 4) in vec4 aAux;
+layout(location = 5) in float aSuck;
+layout(location = 6) in float aLayer;
+uniform mat4 uViewProj;
+uniform float uShells, uFurLen, uFluff, uTime, uGrav;
+uniform int uKind;
+out vec3 vWorld; out vec3 vNor; out vec3 vHair; out vec3 vRest; out vec4 vAux;
+out vec3 vComb; out float vSuck; out float vH;
+void main() {
+  float h = aLayer / uShells;
+  vec3 n = normalize(aNor);
+  float len = uFurLen;
+  if (uKind == 1) len *= clamp(aAux.w / 0.15, 0.5, 1.0);   // 觸手越細毛越短
+  // 梳理方向只保留切線分量；長度 = 梳平程度
+  vec3 c = aComb - n * dot(aComb, n);
+  float cl = length(c);
+  if (cl > 1.0) c /= cl;
+  float flatK = clamp(cl, 0.0, 1.0);
+  vec3 g = vec3(0.0, -uGrav, 0.0);
+  g -= n * dot(g, n);
+  float wob = sin(uTime * 1.7 + aRest.x * 4.0 + aRest.y * 3.0 + aRest.z * 5.0);
+  vec3 wind = vec3(0.6, 0.0, 0.8) * wob * 0.12 * uFluff;
+  wind -= n * dot(wind, n);
+  vec3 bend = c * 1.15 + g * 0.35 + wind;
+  // 毛的形狀：法線方向 h，加上隨 h^1.6 增加的彎曲 → 毛尖會倒向梳理方向
+  vec3 off = n * h * (1.0 - 0.55 * flatK) + bend * pow(h, 1.6);
+  vec3 p = aPos + off * len;
+  vHair = normalize(n * (1.0 - 0.55 * flatK) + bend * 1.6 * pow(max(h, 0.04), 0.6));
+  vWorld = p; vNor = n; vRest = aRest; vAux = aAux; vSuck = aSuck; vH = h; vComb = c;
+  gl_Position = uViewProj * vec4(p, 1.0);
+}`;
+
+const FUR_FS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+in vec3 vWorld; in vec3 vNor; in vec3 vHair; in vec3 vRest; in vec4 vAux;
+in vec3 vComb; in float vSuck; in float vH;
+uniform vec3 uCamPos;
+uniform float uDensity, uFluff, uHappy, uExposure;
+uniform int uKind;
+uniform vec3 uBase, uBelly, uMouth, uBlush;
+uniform vec3 uKeyDir, uKeyCol, uFillDir, uFillCol, uRimCol, uSky, uGround;
+uniform vec3 uHeadC, uEye0, uEye1;
+out vec4 outColor;
+${GLSL_COMMON}
+// Hash without Sine（Dave Hoskins）：格子座標 → 三個 0..1 亂數
+vec3 hash33(vec3 p3) {
+  p3 = fract(p3 * vec3(0.1031, 0.1030, 0.0973));
+  p3 += dot(p3, p3.yxz + 33.33);
+  return fract((p3.xxy + p3.yxx) * p3.zyx);
+}
+void main() {
+  vec3 albedo = uBase;
+  vec3 nRest = vec3(0.0, 0.0, 1.0);
+  float hairMax = 1.0;
+  float aoExtra = 1.0;
+  if (uKind == 0) {
+    // ---- 臉：嘴巴、腮紅、眼窩（在頭部靜止方向上計算，所以表情會跟著頭變形）----
+    vec3 d = normalize(vAux.xyz);
+    nRest = d;
+    float front = smoothstep(0.3, 0.6, d.z);
+    vec2 f = d.xy;
+    vec2 bl = vec2(abs(f.x) - 0.47, f.y + 0.13);
+    float blush = (1.0 - smoothstep(0.02, 0.13, length(bl * vec2(1.0, 1.5)))) * front;
+    float eyeD = min(distance(d, uEye0), distance(d, uEye1));
+    hairMax = mix(0.3, 1.0, smoothstep(0.1, 0.17, eyeD));
+    albedo = mix(albedo, uBlush, blush * (0.62 + 0.3 * uHappy));
+  } else {
+    // ---- 觸手：淺色腹側與兩排吸盤 ----
+    float s = vAux.x;
+    nRest = normalize(vec3(0.0, vAux.y / 0.8, vAux.z));
+    float ventral = smoothstep(-0.15, -0.6, vAux.y);
+    albedo = mix(uBase, uBelly, ventral);
+    float ph = atan(vAux.z, vAux.y);
+    float dphi = 3.14159265 - abs(ph);
+    float du = fract(vSuck + (ph >= 0.0 ? 0.0 : 0.5)) - 0.5;
+    float e = length(vec2(du / 0.34, (dphi - 0.36) / 0.27));
+    float suck = (1.0 - smoothstep(0.82, 1.0, e)) * step(0.12, s) * (1.0 - step(0.985, s));
+    float rim = smoothstep(0.5, 0.75, e) * suck;
+    albedo = mix(albedo, uBelly * vec3(1.03, 0.92, 0.86), suck * 0.75);
+    albedo *= 1.0 - rim * 0.2;
+    hairMax = mix(1.0, 0.28, suck);
+    // 頭的正下方較暗（假的頭部陰影）
+    float dh = length(vWorld.xz - uHeadC.xz);
+    aoExtra = mix(1.0, 0.62, (1.0 - smoothstep(0.45, 1.2, dh)) * (1.0 - smoothstep(0.15, 0.8, vWorld.y)));
+  }
+
+  // ---- 毛髮遮罩：靜止座標切成 3D 小格，每格一根毛（隨機位置、隨機長度、往尖端變細）----
+  float alpha = 1.0;
+  if (vH > 0.0) {
+    // 網格先旋轉一個固定角度，避免格線剛好對齊臉的正面
+    const mat3 GRID_ROT = mat3(0.62921, 0.24405, -0.73793, 0.09773, 0.91705, 0.38661, 0.77107, -0.31538, 0.55316);
+    vec3 q = GRID_ROT * (vRest * uDensity);
+    nRest = GRID_ROT * nRest;
+    float ang = vH * (5.0 + 3.0 * uFluff);
+    q += vec3(sin(ang + vRest.y * 23.0), cos(ang * 1.3 + vRest.z * 19.0), sin(ang * 0.7 + vRest.x * 21.0)) * (uFluff * 0.45 * vH);
+    vec3 cell = floor(q);
+    vec3 j = hash33(cell);
+    // 毛根在格子內隨機偏移；距離只量切平面方向 → 網格不會在曲面上切出同心圓紋
+    vec3 dv = q - (cell + 0.5 + (j - 0.5) * 0.8);
+    dv -= nRest * dot(dv, nRest);
+    float hl = mix(0.4, 1.0, fract(j.x * 13.7 + j.y * 7.3 + j.z * 3.1)) * hairMax;
+    float t = vH / max(hl, 1e-3);
+    float rad = 0.62 * (1.0 - 0.85 * t * t);
+    float dist = length(dv);
+    float aa = max(fwidth(dist), 0.02);
+    float cov = (1.0 - smoothstep(rad - aa, rad + aa, dist)) * step(t, 1.0);
+    // LOD：毛比像素還細時改用平均覆蓋率，遠看不閃爍
+    // 用較短的導數軸：輪廓邊緣斜看時仍保留一根根毛，不會糊成光暈
+    float fp = min(length(dFdx(q)), length(dFdy(q))) * 1.4;
+    float expected = clamp((hairMax - vH) / (0.6 * hairMax + 1e-3), 0.0, 1.0) * 0.55;
+    cov = mix(cov, expected, smoothstep(0.55, 1.3, fp));
+    if (cov < 0.05) discard;
+    alpha = cov;
+  }
+
+  // ---- 光照：包覆漫射 + Kajiya-Kay 毛髮高光 + 絨布邊緣光 ----
+  vec3 N = normalize(vNor);
+  vec3 Th = normalize(vHair);
+  vec3 V = normalize(uCamPos - vWorld);
+  float fao = mix(0.42, 1.0, pow(vH, 0.75));
+  float gy = clamp(vWorld.y / 0.45, 0.0, 1.0);
+  float gao = mix(0.62, 1.0, gy * gy * (3.0 - 2.0 * gy)) * mix(0.72, 1.0, smoothstep(-0.8, 0.1, N.y));
+  float NL = dot(N, uKeyDir);
+  float wrap = clamp((NL + 0.5) / 1.5, 0.0, 1.0);
+  float TL = dot(Th, uKeyDir);
+  float kk = sqrt(max(0.0, 1.0 - TL * TL));
+  float diff = wrap * mix(1.0, kk, 0.4);
+  vec3 Hv = normalize(uKeyDir + V);
+  float TH = dot(Th, Hv);
+  float spec = pow(sqrt(max(0.0, 1.0 - TH * TH)), 48.0) * 0.16 * vH * wrap;
+  float fill = clamp((dot(N, uFillDir) + 0.35) / 1.35, 0.0, 1.0);
+  float NV = clamp(dot(N, V), 0.0, 1.0);
+  float sheen = pow(1.0 - NV, 3.0) * (0.15 + 0.6 * vH) * 0.6;
+  vec3 amb = mix(uGround, uSky, N.y * 0.5 + 0.5);
+  // 絨毛的「毛向」：毛倒向鏡頭時看起來較暗、背向鏡頭較亮 → 梳過的地方會出現深淺筆觸
+  vec3 Vt = V - N * dot(V, N);
+  float nap = dot(vComb, Vt / max(length(Vt), 1e-4));
+  float napShade = 1.0 - 0.24 * nap;
+  spec *= 1.0 + 2.5 * length(vComb);
+  float occl = fao * gao * aoExtra * napShade;
+  vec3 col = albedo * (uKeyCol * diff + uFillCol * fill + amb * 0.55) * occl;
+  col += albedo * albedo * uKeyCol * 0.3 * (1.0 - abs(NL)) * wrap * fao;
+  col += uKeyCol * spec * gao;
+  col += mix(albedo, vec3(1.0), 0.2) * uRimCol * sheen * gao * aoExtra;
+  outColor = vec4(toSRGB(tonemap(col * uExposure)), alpha);
+}`;
+
+// 玻璃珠眼睛（uMode 0）／開心瞇眼的弧線（uMode 1）
+const EYE_VS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec3 aNor;
+uniform mat4 uViewProj, uModel;
+uniform mat3 uNormalMat;
+out vec3 vWorld; out vec3 vNor;
+void main() {
+  vec4 w = uModel * vec4(aPos, 1.0);
+  vWorld = w.xyz;
+  vNor = normalize(uNormalMat * aNor);
+  gl_Position = uViewProj * w;
+}`;
+
+const EYE_FS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+in vec3 vWorld; in vec3 vNor;
+uniform vec3 uCamPos, uKeyDir, uKeyCol, uFillDir, uSky, uGround, uMouth;
+uniform float uExposure;
+uniform int uMode;
+out vec4 outColor;
+${GLSL_COMMON}
+void main() {
+  vec3 N = normalize(vNor), V = normalize(uCamPos - vWorld);
+  vec3 col;
+  if (uMode == 1) {
+    float d = clamp((dot(N, uKeyDir) + 0.4) / 1.4, 0.0, 1.0);
+    col = uMouth * (0.35 + 0.9 * d);
+  } else {
+    vec3 R = reflect(-V, N);
+    float fr = 0.04 + 0.96 * pow(1.0 - max(dot(N, V), 0.0), 5.0);
+    vec3 env = mix(uGround, uSky, smoothstep(-0.3, 0.7, R.y)) * 0.55;
+    float box = smoothstep(0.88, 0.94, dot(R, uKeyDir));
+    float pt = pow(max(dot(N, normalize(uKeyDir + V)), 0.0), 260.0);
+    float side = smoothstep(0.93, 0.97, dot(R, uFillDir)) * 0.25;
+    col = vec3(0.006, 0.005, 0.006) + env * fr + uKeyCol * (box * 1.4 + pt * 2.2 + side);
+  }
+  outColor = vec4(toSRGB(tonemap(col * uExposure)), 1.0);
+}`;
+
+// 接觸陰影：從地板往上看，越靠近地板越黑
+const SHADOW_VS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+layout(location = 0) in vec3 aPos;
+uniform mat4 uShadowMat;
+out float vY;
+void main() {
+  vY = aPos.y;
+  gl_Position = uShadowMat * vec4(aPos, 1.0);
+}`;
+
+const SHADOW_FS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+in float vY;
+uniform float uHeight;
+out vec4 outColor;
+void main() {
+  float a = 1.0 - clamp(vY / uHeight, 0.0, 1.0);
+  outColor = vec4(a * a, 0.0, 0.0, 1.0);
+}`;
+
+const FULL_VS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+out vec2 vUv;
+void main() {
+  vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
+  vUv = p;
+  gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
+}`;
+
+const BLUR_FS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+in vec2 vUv;
+uniform sampler2D uTex;
+uniform vec2 uDir;
+out vec4 outColor;
+void main() {
+  float w[5] = float[5](0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
+  float s = texture(uTex, vUv).r * w[0];
+  for (int i = 1; i < 5; i++) {
+    s += texture(uTex, vUv + uDir * float(i)).r * w[i];
+    s += texture(uTex, vUv - uDir * float(i)).r * w[i];
+  }
+  outColor = vec4(s, 0.0, 0.0, 1.0);
+}`;
+
+const FLOOR_VS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+layout(location = 0) in vec2 aXZ;
+uniform mat4 uViewProj;
+uniform vec3 uCenter;
+uniform float uHalf;
+out vec2 vUv;
+void main() {
+  vec3 p = vec3(uCenter.x + aXZ.x * uHalf, 0.0, uCenter.z + aXZ.y * uHalf);
+  vUv = aXZ * 0.5 + 0.5;
+  gl_Position = uViewProj * vec4(p, 1.0);
+}`;
+
+const FLOOR_FS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+in vec2 vUv;
+uniform sampler2D uTex;
+uniform vec3 uShadowCol;
+uniform float uStrength;
+out vec4 outColor;
+void main() {
+  float s = texture(uTex, vUv).r;
+  vec2 e = smoothstep(vec2(0.0), vec2(0.14), vUv) * smoothstep(vec2(0.0), vec2(0.14), 1.0 - vUv);
+  s = clamp(s * e.x * e.y * uStrength, 0.0, 1.0);
+  // 乘法混合：畫面 = 背景 × 這個顏色
+  outColor = vec4(mix(vec3(1.0), uShadowCol, s), 1.0);
+}`;
+
+const BG_FS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+in vec2 vUv;
+uniform vec3 uTop, uBottom;
+uniform vec2 uRes, uFocus;
+out vec4 outColor;
+void main() {
+  vec3 c = mix(uBottom, uTop, smoothstep(0.0, 1.0, vUv.y));
+  vec2 p = (vUv - uFocus) * vec2(uRes.x / uRes.y, 1.0);
+  c *= mix(0.88, 1.05, smoothstep(1.4, 0.15, length(p)));
+  float n = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+  c += (n - 0.5) / 255.0;   // 抖色，避免漸層色帶
+  outColor = vec4(c, 1.0);
+}`;
+
+
+// ---------------------------------------------------------------------
+// 6. WebGL2 渲染器
+// ---------------------------------------------------------------------
+const SHADOW_RES = 256;
+const SHADOW_HALF = 3.6;     // 陰影區域半寬（單位：10 cm）
+const SHADOW_HEIGHT = 2.6;   // 這個高度以上不再投下接觸陰影
+const MAX_SHELLS = 64;
+
+class Renderer {
+  constructor(canvas) {
+    const gl = canvas.getContext('webgl2', {
+      antialias: true, alpha: false, depth: true, stencil: false,
+      premultipliedAlpha: false, preserveDrawingBuffer: false, powerPreference: 'high-performance',
+    });
+    if (!gl) throw new Error('NO_WEBGL2');
+    this.gl = gl;
+    this.canvas = canvas;
+    this.samples = gl.getParameter(gl.SAMPLES);
+    this.progFur = this.program(FUR_VS, FUR_FS, 'fur');
+    this.progEye = this.program(EYE_VS, EYE_FS, 'eye');
+    this.progShadow = this.program(SHADOW_VS, SHADOW_FS, 'shadow');
+    this.progBlur = this.program(FULL_VS, BLUR_FS, 'blur');
+    this.progFloor = this.program(FLOOR_VS, FLOOR_FS, 'floor');
+    this.progBg = this.program(FULL_VS, BG_FS, 'background');
+
+    // 殼層索引（instanced attribute）
+    const layers = new Float32Array(MAX_SHELLS + 1);
+    for (let i = 0; i <= MAX_SHELLS; i++) layers[i] = i;
+    this.layerBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.layerBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, layers, gl.STATIC_DRAW);
+
+    this.emptyVAO = gl.createVertexArray();
+    // 地板方塊
+    this.quadVAO = gl.createVertexArray();
+    gl.bindVertexArray(this.quadVAO);
+    const qb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, qb);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.bindVertexArray(null);
+
+    this.sphere = this.simpleMesh(makeSphere(24, 16));
+    this.arc = this.simpleMesh(makeArc(20, 10, 0.24, 0.08, 0.92, 0.5));     // 開心瞇眼 ∩
+    this.mouth = this.simpleMesh(makeArc(24, 8, 0.15, 0.22, 0.78, 0.82));   // 刺繡嘴巴（轉 180° 變 ∪）
+    this.shA = this.target(SHADOW_RES, true);
+    this.shB = this.target(SHADOW_RES, false);
+    this.shadowMat = new Float32Array(16);
+    this.model = new Float32Array(16);
+    this.nmat = new Float32Array(9);
+  }
+
+  program(vsSrc, fsSrc, name) {
+    const gl = this.gl;
+    const compile = (type, src) => {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+        throw new Error(`${name} shader: ${gl.getShaderInfoLog(s)}`);
+      }
+      return s;
+    };
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vsSrc));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fsSrc));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(`${name} link: ${gl.getProgramInfoLog(p)}`);
+    const cache = new Map();
+    return {
+      p,
+      u(n) {
+        let l = cache.get(n);
+        if (l === undefined) { l = gl.getUniformLocation(p, n); cache.set(n, l); }
+        return l;
+      },
+    };
+  }
+
+  furMesh(dynData, statData, index) {
+    const gl = this.gl;
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    const dynBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, dynData.byteLength, gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, DYN * 4, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, DYN * 4, 12);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, DYN * 4, 24);
+    const statBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, statBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, statData, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 3, gl.FLOAT, false, STA * 4, 0);
+    gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 4, gl.FLOAT, false, STA * 4, 12);
+    gl.enableVertexAttribArray(5); gl.vertexAttribPointer(5, 1, gl.FLOAT, false, STA * 4, 28);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.layerBuf);
+    gl.enableVertexAttribArray(6); gl.vertexAttribPointer(6, 1, gl.FLOAT, false, 4, 0);
+    gl.vertexAttribDivisor(6, 1);
+    const ib = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, index, gl.STATIC_DRAW);
+    gl.bindVertexArray(null);
+    return { vao, dynBuf, count: index.length, data: dynData };
+  }
+
+  simpleMesh(m) {
+    const gl = this.gl;
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    const vb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+    gl.bufferData(gl.ARRAY_BUFFER, m.data, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
+    const ib = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, m.index, gl.STATIC_DRAW);
+    gl.bindVertexArray(null);
+    return { vao, count: m.index.length };
+  }
+
+  target(size, depth) {
+    const gl = this.gl;
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, size, size, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    if (depth) {
+      const rb = gl.createRenderbuffer();
+      gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
+      gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, size, size);
+      gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rb);
+    }
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error('FRAMEBUFFER');
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return { tex, fb, size };
+  }
+
+  upload(mesh) {
+    const gl = this.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.dynBuf);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, mesh.data);
+  }
+
+  // 陰影投影：俯視正交 + 沿主光方向輕微斜切（影子稍微偏離光源）
+  buildShadowMat(cx, cz, sx, sz) {
+    const m = this.shadowMat, h = SHADOW_HALF;
+    m.fill(0);
+    m[0] = 1 / h; m[4] = -sx / h; m[12] = -cx / h;
+    m[5] = -sz / h; m[9] = 1 / h; m[13] = -cz / h;
+    m[6] = 2 / SHADOW_HEIGHT; m[14] = -1;
+    m[15] = 1;
+    return m;
+  }
+
+  shadowPass(meshes, cx, cz, sx, sz) {
+    const gl = this.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.shA.fb);
+    gl.viewport(0, 0, SHADOW_RES, SHADOW_RES);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clearDepth(1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);
+    gl.depthMask(true);
+    gl.disable(gl.CULL_FACE);
+    gl.disable(gl.BLEND);
+    const P = this.progShadow;
+    gl.useProgram(P.p);
+    gl.uniformMatrix4fv(P.u('uShadowMat'), false, this.buildShadowMat(cx, cz, sx, sz));
+    gl.uniform1f(P.u('uHeight'), SHADOW_HEIGHT);
+    for (const m of meshes) {
+      gl.bindVertexArray(m.vao);
+      gl.drawElements(gl.TRIANGLES, m.count, gl.UNSIGNED_SHORT, 0);
+    }
+    // 兩次可分離高斯模糊（先寬後窄）
+    gl.disable(gl.DEPTH_TEST);
+    const B = this.progBlur;
+    gl.useProgram(B.p);
+    gl.bindVertexArray(this.emptyVAO);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(B.u('uTex'), 0);
+    const px = 1 / SHADOW_RES;
+    const passes = [[2.2, 0], [0, 2.2], [0.9, 0], [0, 0.9]];
+    passes.forEach(([dx, dy], i) => {
+      const src = i % 2 === 0 ? this.shA : this.shB;
+      const dst = i % 2 === 0 ? this.shB : this.shA;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, dst.fb);
+      gl.bindTexture(gl.TEXTURE_2D, src.tex);
+      gl.uniform2f(B.u('uDir'), dx * px, dy * px);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    });
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+
+  // 眼睛的模型矩陣：位置 E、表面法線 z、頭部向上 up，三軸縮放
+  eyeModel(E, z, up, sx, sy, sz) {
+    let ux = up[0], uy = up[1], uz = up[2];
+    const d = ux * z[0] + uy * z[1] + uz * z[2];
+    ux -= z[0] * d; uy -= z[1] * d; uz -= z[2] * d;
+    const l = Math.hypot(ux, uy, uz) || 1;
+    ux /= l; uy /= l; uz /= l;
+    const xx = uy * z[2] - uz * z[1], xy = uz * z[0] - ux * z[2], xz = ux * z[1] - uy * z[0];
+    const m = this.model, n = this.nmat;
+    m[0] = xx * sx; m[1] = xy * sx; m[2] = xz * sx; m[3] = 0;
+    m[4] = ux * sy; m[5] = uy * sy; m[6] = uz * sy; m[7] = 0;
+    m[8] = z[0] * sz; m[9] = z[1] * sz; m[10] = z[2] * sz; m[11] = 0;
+    m[12] = E[0]; m[13] = E[1]; m[14] = E[2]; m[15] = 1;
+    // 法線矩陣 = 逆轉置；正交基底下就是各軸除以縮放
+    n[0] = xx / sx; n[1] = xy / sx; n[2] = xz / sx;
+    n[3] = ux / sy; n[4] = uy / sy; n[5] = uz / sy;
+    n[6] = z[0] / sz; n[7] = z[1] / sz; n[8] = z[2] / sz;
+  }
+}
+
+function makeSphere(seg, ring) {
+  const data = [], index = [];
+  for (let j = 0; j <= ring; j++) {
+    const v = j / ring, th = v * Math.PI;
+    for (let i = 0; i <= seg; i++) {
+      const u = i / seg, ph = u * Math.PI * 2;
+      const x = Math.sin(th) * Math.cos(ph), y = Math.cos(th), z = Math.sin(th) * Math.sin(ph);
+      data.push(x, y, z, x, y, z);
+    }
+  }
+  for (let j = 0; j < ring; j++) {
+    for (let i = 0; i < seg; i++) {
+      const a = j * (seg + 1) + i, b = a + seg + 1;
+      index.push(a, a + 1, b, a + 1, b + 1, b);
+    }
+  }
+  return { data: new Float32Array(data), index: new Uint16Array(index) };
+}
+
+// 圓弧管（局部 xy 平面，∩ 形）：u0..u1 是弧的起訖（單位 π），yOff 讓弧置中
+function makeArc(seg, tube, r, u0, u1, yOff) {
+  const data = [], index = [];
+  for (let i = 0; i <= seg; i++) {
+    const u = (u0 + (i / seg) * (u1 - u0)) * Math.PI;
+    const cu = Math.cos(u), su = Math.sin(u);
+    for (let j = 0; j <= tube; j++) {
+      const v = (j / tube) * Math.PI * 2, cv = Math.cos(v), sv = Math.sin(v);
+      data.push(cu * (1 + r * cv), su * (1 + r * cv) - yOff, r * sv, cu * cv, su * cv, sv);
+    }
+  }
+  for (let i = 0; i < seg; i++) {
+    for (let j = 0; j < tube; j++) {
+      const a = i * (tube + 1) + j, b = a + tube + 1;
+      index.push(a, b, a + 1, a + 1, b, b + 1);
+    }
+  }
+  return { data: new Float32Array(data), index: new Uint16Array(index) };
+}
+
+
+// ---------------------------------------------------------------------
+// 7. 互動：相機、射線拾取、抓取／戳／梳毛、黏人觸手、音效
+// ---------------------------------------------------------------------
+const UP = [0, 1, 0];
+
+function updateCamera() {
+  const c = app.cam, w = app.viewW, h = app.viewH;
+  const hc = app.head.c;
+  // 視角目標慢慢跟著章魚（被拋起或拖走時不會跑出畫面）
+  const k = 1 - Math.exp(-app.frameDt * 2.5);
+  c.target[0] += (hc[0] * 0.75 - c.target[0]) * k;
+  c.target[1] += (clamp(hc[1] * 0.55 + 0.15, 0.45, 2.2) - c.target[1]) * k;
+  c.target[2] += (hc[2] * 0.75 - c.target[2]) * k;
+  const tanH = Math.tan(c.fov / 2);
+  const freeW = Math.max(200, w - app.layout.right);
+  const freeH = Math.max(200, h - app.layout.bottom - app.layout.top);
+  const fitW = (w < 720 ? 4.9 : 5.4) / (2 * tanH * (freeW / h));
+  const fitH = 3.6 / (2 * tanH * (freeH / h));
+  const dist = clamp(Math.max(fitW, fitH), 6.5, 24) * c.zoom;
+  const cp = Math.cos(c.pitch);
+  c.eye[0] = c.target[0] + dist * cp * Math.sin(c.yaw);
+  c.eye[1] = c.target[1] + dist * Math.sin(c.pitch);
+  c.eye[2] = c.target[2] + dist * cp * Math.cos(c.yaw);
+  M4.lookAt(c.view, c.eye, c.target, UP);
+  // 非對稱視錐：讓章魚落在「沒被面板擋住」的區域中央
+  const n = 0.1, f = 80, top = n * tanH, right = top * (w / h);
+  const sx = right * (app.layout.right / w);
+  const sy = top * ((app.layout.bottom - app.layout.top) / h);
+  c.n = n; c.l = -right + sx; c.r = right + sx; c.b = -top - sy; c.t = top - sy;
+  M4.frustum(c.proj, c.l, c.r, c.b, c.t, n, f);
+  M4.mul(c.viewProj, c.proj, c.view);
+  // 相機基底（給射線用）
+  const fx = c.target[0] - c.eye[0], fy = c.target[1] - c.eye[1], fz = c.target[2] - c.eye[2];
+  const fl = Math.hypot(fx, fy, fz);
+  c.fwd[0] = fx / fl; c.fwd[1] = fy / fl; c.fwd[2] = fz / fl;
+  c.right[0] = c.view[0]; c.right[1] = c.view[4]; c.right[2] = c.view[8];
+  c.up[0] = c.view[1]; c.up[1] = c.view[5]; c.up[2] = c.view[9];
+}
+
+// 螢幕座標 → 世界射線
+function screenRay(px, py) {
+  const c = app.cam, w = app.viewW, h = app.viewH;
+  const xn = c.l + (c.r - c.l) * (px / w);
+  const yn = c.t - (c.t - c.b) * (py / h);
+  let dx = c.right[0] * xn + c.up[0] * yn + c.fwd[0] * c.n;
+  let dy = c.right[1] * xn + c.up[1] * yn + c.fwd[1] * c.n;
+  let dz = c.right[2] * xn + c.up[2] * yn + c.fwd[2] * c.n;
+  const l = Math.hypot(dx, dy, dz);
+  return { o: [c.eye[0], c.eye[1], c.eye[2]], d: [dx / l, dy / l, dz / l] };
+}
+
+const _bary = new Float32Array(3);
+// 射線打章魚：頭部 5120 個三角形 + 觸手（先用包圍球篩）
+function pick(ray) {
+  const [ox, oy, oz] = ray.o, [dx, dy, dz] = ray.d;
+  let best = null, bestT = Infinity;
+  const hm = app.headMesh, hp = hm.pos, hi = hm.index, hc = app.head.c;
+  {
+    const ex = hc[0] - ox, ey = hc[1] - oy, ez = hc[2] - oz;
+    const tc = ex * dx + ey * dy + ez * dz;
+    const d2 = ex * ex + ey * ey + ez * ez - tc * tc;
+    if (d2 < 1.6 * 1.6) {
+      for (let f = 0; f < hi.length; f += 3) {
+        const a = hi[f] * 3, b = hi[f + 1] * 3, c = hi[f + 2] * 3;
+        const t = rayTri(ox, oy, oz, dx, dy, dz, hp[a], hp[a + 1], hp[a + 2], hp[b], hp[b + 1], hp[b + 2], hp[c], hp[c + 1], hp[c + 2], _bary);
+        if (t > 0 && t < bestT) {
+          bestT = t;
+          best = { kind: 'head', t, n: interpNormal(hm.nor, hi[f], hi[f + 1], hi[f + 2]) };
+        }
+      }
+    }
+  }
+  const tm = app.tentMesh, tp = tm.pos, ti = tm.index;
+  const triPer = (TR - 1) * SIDES * 2;
+  for (let k = 0; k < NT; k++) {
+    const B = tm.bound;
+    const ex = B[k * 4] - ox, ey = B[k * 4 + 1] - oy, ez = B[k * 4 + 2] - oz;
+    const tc = ex * dx + ey * dy + ez * dz;
+    if (ex * ex + ey * ey + ez * ez - tc * tc > B[k * 4 + 3] ** 2) continue;
+    for (let f = k * triPer * 3; f < (k + 1) * triPer * 3; f += 3) {
+      const a = ti[f] * 3, b = ti[f + 1] * 3, c = ti[f + 2] * 3;
+      const t = rayTri(ox, oy, oz, dx, dy, dz, tp[a], tp[a + 1], tp[a + 2], tp[b], tp[b + 1], tp[b + 2], tp[c], tp[c + 1], tp[c + 2], _bary);
+      if (t > 0 && t < bestT) {
+        bestT = t;
+        const v = ti[f] - k * TV;
+        const ring = Math.floor(v / RV);
+        const particle = ring >= RINGS - 1 ? NP - 1 : Math.round((ring / (RINGS - 1)) * (NP - 1));
+        best = { kind: 'tent', t, k, ring, particle, n: interpNormal(tm.dyn, ti[f], ti[f + 1], ti[f + 2], DYN, 3) };
+      }
+    }
+  }
+  if (best) best.p = [ox + dx * bestT, oy + dy * bestT, oz + dz * bestT];
+  return best;
+}
+
+function interpNormal(arr, a, b, c, stride = 3, off = 0) {
+  const w = _bary;
+  let nx = 0, ny = 0, nz = 0;
+  [a, b, c].forEach((v, i) => {
+    nx += arr[v * stride + off] * w[i];
+    ny += arr[v * stride + off + 1] * w[i];
+    nz += arr[v * stride + off + 2] * w[i];
+  });
+  const l = Math.hypot(nx, ny, nz) || 1;
+  return [nx / l, ny / l, nz / l];
+}
+
+function rayPlane(ray, px, py, pz, nx, ny, nz) {
+  const den = ray.d[0] * nx + ray.d[1] * ny + ray.d[2] * nz;
+  if (Math.abs(den) < 1e-6) return null;
+  const t = ((px - ray.o[0]) * nx + (py - ray.o[1]) * ny + (pz - ray.o[2]) * nz) / den;
+  if (t <= 0) return null;
+  return [ray.o[0] + ray.d[0] * t, ray.o[1] + ray.d[1] * t, ray.o[2] + ray.d[2] * t];
+}
+
+// ---- 梳毛：把拖曳方向投影到表面切平面，寫進每個頂點的梳理向量 ----
+function applyComb(hit, Dx, Dy, Dz) {
+  const rad = 0.3, rad2 = rad * rad;
+  const [hx, hy, hz] = hit.p;
+  const hm = app.headMesh, pos = hm.pos, nor = hm.nor, cr = hm.combRest, rn = hm.restNor, R = app.head.R;
+  for (let v = 0; v < hm.n; v++) {
+    const k = v * 3;
+    const ex = pos[k] - hx, ey = pos[k + 1] - hy, ez = pos[k + 2] - hz;
+    const d2 = ex * ex + ey * ey + ez * ez;
+    if (d2 >= rad2) continue;
+    const w = Math.min(1, (1 - d2 / rad2) ** 2 * 0.9);
+    const nd = Dx * nor[k] + Dy * nor[k + 1] + Dz * nor[k + 2];
+    let tx = Dx - nor[k] * nd, ty = Dy - nor[k + 1] * nd, tz = Dz - nor[k + 2] * nd;
+    // 世界 → 頭部靜止座標（乘 Rᵀ）
+    let rx = R[0] * tx + R[3] * ty + R[6] * tz;
+    let ry = R[1] * tx + R[4] * ty + R[7] * tz;
+    let rz = R[2] * tx + R[5] * ty + R[8] * tz;
+    const rd = rx * rn[k] + ry * rn[k + 1] + rz * rn[k + 2];
+    rx -= rn[k] * rd; ry -= rn[k + 1] * rd; rz -= rn[k + 2] * rd;
+    const l = Math.hypot(rx, ry, rz);
+    if (l < 1e-6) continue;
+    cr[k] += (rx / l - cr[k]) * w;
+    cr[k + 1] += (ry / l - cr[k + 1]) * w;
+    cr[k + 2] += (rz / l - cr[k + 2]) * w;
+  }
+  const tm = app.tentMesh, tp = tm.pos, comb = tm.comb;
+  for (let k = 0; k < NT; k++) {
+    const B = tm.bound;
+    if (Math.hypot(B[k * 4] - hx, B[k * 4 + 1] - hy, B[k * 4 + 2] - hz) > B[k * 4 + 3] + rad) continue;
+    for (let j = 0; j < TR; j++) {
+      const o = (k * TR + j) * 3;
+      for (let s = 0; s < RV; s++) {
+        const v = k * TV + j * RV + s, p = v * 3;
+        const ex = tp[p] - hx, ey = tp[p + 1] - hy, ez = tp[p + 2] - hz;
+        const d2 = ex * ex + ey * ey + ez * ez;
+        if (d2 >= rad2) continue;
+        const w = Math.min(1, (1 - d2 / rad2) ** 2 * 0.9);
+        const ph = (s / SIDES) * Math.PI * 2, cp = Math.cos(ph), sp = Math.sin(ph);
+        let ax = -tm.ringN[o] * sp * FLAT + tm.ringB[o] * cp;
+        let ay = -tm.ringN[o + 1] * sp * FLAT + tm.ringB[o + 1] * cp;
+        let az = -tm.ringN[o + 2] * sp * FLAT + tm.ringB[o + 2] * cp;
+        const al = Math.hypot(ax, ay, az) || 1;
+        const a = Dx * tm.ringT[o] + Dy * tm.ringT[o + 1] + Dz * tm.ringT[o + 2];
+        const b = (Dx * ax + Dy * ay + Dz * az) / al;
+        const l = Math.hypot(a, b);
+        if (l < 1e-6) continue;
+        comb[v * 2] += (a / l - comb[v * 2]) * w;
+        comb[v * 2 + 1] += (b / l - comb[v * 2 + 1]) * w;
+      }
+    }
+  }
+}
+
+// ---- 音效（WebAudio 即時合成，沒有音檔）----
+const audio = { ctx: null, out: null, noise: null, lastSquish: 0 };
+function ensureAudio() {
+  if (!P.sound) return;
+  if (audio.ctx) {
+    if (audio.ctx.state === 'suspended') audio.ctx.resume().catch(() => {});
+    return;
+  }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  try {
+    audio.ctx = new AC();
+    if (audio.ctx.state === 'suspended') audio.ctx.resume().catch(() => {});
+    audio.out = audio.ctx.createGain();
+    audio.out.gain.value = 0.45;
+    audio.out.connect(audio.ctx.destination);
+    const len = Math.floor(audio.ctx.sampleRate * 0.3);
+    audio.noise = audio.ctx.createBuffer(1, len, audio.ctx.sampleRate);
+    const ch = audio.noise.getChannelData(0);
+    for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+  } catch (e) {
+    audio.ctx = null;
+  }
+}
+function tone(f0, f1, dur, gain, type = 'sine') {
+  if (!P.sound || !audio.ctx || audio.ctx.state !== 'running') return;
+  const t = audio.ctx.currentTime;
+  const o = audio.ctx.createOscillator(), g = audio.ctx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gain, t + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(audio.out);
+  o.start(t);
+  o.stop(t + dur + 0.03);
+}
+function hiss(dur, gain, freq) {
+  if (!P.sound || !audio.ctx || audio.ctx.state !== 'running') return;
+  const t = audio.ctx.currentTime;
+  const s = audio.ctx.createBufferSource(), f = audio.ctx.createBiquadFilter(), g = audio.ctx.createGain();
+  s.buffer = audio.noise;
+  f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 1.2;
+  g.gain.setValueAtTime(gain, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f).connect(g).connect(audio.out);
+  s.start(t);
+  s.stop(t + dur + 0.02);
+}
+const sfx = {
+  pop() { tone(760, 150, 0.11, 0.32); hiss(0.05, 0.12, 1900); },
+  plip() { tone(820, 1380, 0.07, 0.16); },
+  boop() { tone(420, 250, 0.13, 0.24, 'triangle'); },
+  squish(v) {
+    const now = performance.now();
+    if (now - audio.lastSquish < 280) return;
+    audio.lastSquish = now;
+    const g = Math.min(0.32, 0.04 * v);
+    hiss(0.16, g, 520);
+    tone(180, 85, 0.16, g * 0.9);
+  },
+};
+
+// ---- 黏人模式：最近的兩隻觸手伸向游標，碰到就吸住，拉太遠「啵」一聲彈開 ----
+function updateClingy(dt) {
+  const tents = app.tents, ptr = app.hover;
+  let C = null;
+  if (P.clingy && ptr.active && app.drag.mode === 'none') {
+    const ray = screenRay(ptr.x, ptr.y);
+    C = rayPlane(ray, 0, 0.3, 0, 0, 1, 0);
+    if (C) {
+      C[0] = clamp(C[0], -BOUNDS + 0.2, BOUNDS - 0.2);
+      C[2] = clamp(C[2], -BOUNDS + 0.2, BOUNDS - 0.2);
+    }
+  }
+  app.cling = C;
+  const tip = (NP - 1) * 3;
+  const cand = [];
+  for (const t of tents) {
+    t.cooldown = Math.max(0, t.cooldown - dt);
+    t._dTip = Infinity; t._dRoot = Infinity;
+    if (!C) continue;
+    t._dTip = Math.hypot(t.x[tip] - C[0], t.x[tip + 1] - C[1], t.x[tip + 2] - C[2]);
+    t._dRoot = Math.hypot(t.x[0] - C[0], t.x[1] - C[1], t.x[2] - C[2]);
+    // 游標停在頭上時不發起新的「伸手」（不然觸手會伸到頭底下去抓自己）
+    if (app.hover.kind !== 'head' && t.cooldown <= 0 && t.grab < 0 && t._dRoot < t.L * 1.12 && t._dTip < 1.7) cand.push(t);
+  }
+  cand.sort((a, b) => a._dTip - b._dTip);
+  const chosen = new Set(cand.slice(0, 2));
+  for (const t of tents) {
+    if (t.attached) {
+      if (!C || t._dRoot > t.L * 1.32) {
+        t.detach(1.3);
+        sfx.pop();
+      } else {
+        const kk = Math.min(1, dt * 18);
+        t.reachTarget[0] += (C[0] - t.reachTarget[0]) * kk;
+        t.reachTarget[1] += (C[1] - t.reachTarget[1]) * kk;
+        t.reachTarget[2] += (C[2] - t.reachTarget[2]) * kk;
+        t.reach = 1;
+      }
+      continue;
+    }
+    t.reach = chosen.has(t) ? Math.min(1, t.reach + dt * 1.8) : Math.max(0, t.reach - dt * 1.4);
+    if (chosen.has(t) && t.reach > 0.5 && t._dTip < 0.26) {
+      t.attach(C[0], C[1], C[2]);
+      sfx.plip();
+      hint('cling', '被黏住了！把游標拉遠一點就能甩開');
+    }
+  }
+}
+
+// 每個子步驟：伸向游標的觸手尖端受到拉力，頭往游標方向傾
+function applyClingForces(dt) {
+  const C = app.cling;
+  if (!C) return;
+  let lean = 0;
+  for (const t of app.tents) {
+    if (t.attached || t.reach <= 0) continue;
+    lean = Math.max(lean, t.reach);
+    const pull = 16 * t.reach * dt;
+    for (let i = NP - 3; i < NP; i++) {
+      const s = pull * (i - (NP - 4)) / 3, k = i * 3;
+      t.v[k] += (C[0] - t.x[k]) * s;
+      t.v[k + 1] += (C[1] + 0.15 - t.x[k + 1]) * s;
+      t.v[k + 2] += (C[2] - t.x[k + 2]) * s;
+    }
+  }
+  for (const t of app.tents) if (t.attached) lean = 1;
+  if (lean > 0) {
+    const hc = app.head.c;
+    const dx = C[0] - hc[0], dz = C[2] - hc[2], l = Math.hypot(dx, dz);
+    if (l > 0.3) app.head.lean(dx / l, dz / l, 2.2 * lean, dt);
+  }
+}
+
+// ---- 指標事件 ----
+function setupPointer(canvas) {
+  const ptrs = new Map();
+  const drag = app.drag;
+  const local = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return [e.clientX - r.left, e.clientY - r.top];
+  };
+  const releaseAll = () => {
+    app.head.grabbing = false;
+    for (const t of app.tents) if (t.grab >= 0) t.release();
+  };
+  const detachAll = (sound) => {
+    let any = false;
+    for (const t of app.tents) if (t.attached) { t.detach(0.8); any = true; }
+    if (any && sound) sfx.pop();
+  };
+
+  canvas.addEventListener('pointerdown', (e) => {
+    ensureAudio();
+    const [x, y] = local(e);
+    ptrs.set(e.pointerId, [x, y]);
+    canvas.setPointerCapture(e.pointerId);
+    app.interacted = true;
+    if (ptrs.size === 2) {
+      releaseAll();
+      const [a, b] = [...ptrs.values()];
+      drag.mode = 'pinch';
+      drag.pinch = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      return;
+    }
+    if (ptrs.size > 2) return;
+    detachAll(true);
+    const ray = screenRay(x, y);
+    const hit = pick(ray);
+    drag.x0 = x; drag.y0 = y; drag.lx = x; drag.ly = y; drag.t0 = performance.now(); drag.moved = false;
+    drag.vyaw = 0; drag.vpitch = 0;
+    const comb = P.tool === 'comb' || e.shiftKey;
+    if (hit && comb) {
+      drag.mode = 'comb';
+      drag.last = hit.p;
+      hint('comb', '順著同一個方向刷，毛會倒下、留下梳痕');
+    } else if (hit) {
+      drag.mode = 'grab';
+      drag.hit = hit;
+      drag.plane = [hit.p[0], hit.p[1], hit.p[2]];
+      if (hit.kind === 'head') app.head.startGrab(hit.p[0], hit.p[1], hit.p[2]);
+      else app.tents[hit.k].startGrab(hit.particle, hit.p[0], hit.p[1], hit.p[2]);
+    } else {
+      drag.mode = 'orbit';
+    }
+    updateCursor(e);
+  });
+
+  window.addEventListener('pointermove', (e) => {
+    const onCanvas = e.target === canvas || ptrs.has(e.pointerId);
+    const [x, y] = local(e);
+    if (e.pointerType !== 'touch') {
+      app.hover.active = onCanvas && drag.mode === 'none';
+      app.hover.x = x; app.hover.y = y;
+    }
+    if (!ptrs.has(e.pointerId)) { if (onCanvas) app.hover.pending = true; updateCursor(e); return; }
+    ptrs.set(e.pointerId, [x, y]);
+    if (drag.mode === 'pinch' && ptrs.size === 2) {
+      const [a, b] = [...ptrs.values()];
+      const d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      if (drag.pinch > 0) app.cam.zoom = clamp(app.cam.zoom * (drag.pinch / d), 0.45, 1.8);
+      drag.pinch = d;
+      return;
+    }
+    const dx = x - drag.lx, dy = y - drag.ly;
+    if (Math.hypot(x - drag.x0, y - drag.y0) > 6) drag.moved = true;
+    drag.lx = x; drag.ly = y;
+    drag.tMove = performance.now();
+    if (drag.mode === 'orbit') {
+      app.cam.yaw -= dx * 0.006;
+      app.cam.pitch = clamp(app.cam.pitch + dy * 0.004, 0.06, 1.25);
+      drag.vyaw = -dx * 0.006; drag.vpitch = dy * 0.004;
+    } else if (drag.mode === 'grab') {
+      const f = app.cam.fwd, p = drag.plane;
+      const G = rayPlane(screenRay(x, y), p[0], p[1], p[2], f[0], f[1], f[2]);
+      if (G) {
+        G[1] = clamp(G[1], 0.05, CEILING - 0.5);
+        G[0] = clamp(G[0], -BOUNDS + 0.3, BOUNDS - 0.3);
+        G[2] = clamp(G[2], -BOUNDS + 0.3, BOUNDS - 0.3);
+        if (drag.hit.kind === 'head') app.head.grabTarget.set(G);
+        else app.tents[drag.hit.k].grabTarget.set(G);
+      }
+    } else if (drag.mode === 'comb') {
+      drag.combX = x; drag.combY = y; drag.combPending = true;
+    }
+  });
+
+  const end = (e) => {
+    if (!ptrs.has(e.pointerId)) return;
+    ptrs.delete(e.pointerId);
+    if (drag.mode === 'grab') {
+      const quick = !drag.moved && performance.now() - drag.t0 < 320;
+      releaseAll();
+      if (drag.moved) app.wantFace = true;
+      if (quick) {
+        const h = drag.hit;
+        if (h.kind === 'head') app.head.poke(h.p[0], h.p[1], h.p[2], h.n[0], h.n[1], h.n[2], 3.2);
+        else app.tents[h.k].flick(h.particle, 3.4);
+        sfx.boop();
+        app.happy = Math.max(app.happy, 0.6);
+      }
+    }
+    // 放開前停住超過 80 ms 就不要慣性旋轉
+    if (drag.mode === 'orbit' && performance.now() - (drag.tMove || 0) > 80) { drag.vyaw = 0; drag.vpitch = 0; }
+    if (drag.mode === 'pinch' && ptrs.size > 0) { drag.mode = 'none'; return; }
+    if (ptrs.size === 0) drag.mode = 'none';
+    updateCursor(e);
+  };
+  window.addEventListener('pointerup', end);
+  window.addEventListener('pointercancel', end);
+  canvas.addEventListener('pointerleave', (e) => {
+    if (e.pointerType !== 'touch' && !ptrs.has(e.pointerId)) app.hover.active = false;
+  });
+  window.addEventListener('pointerout', (e) => { if (!e.relatedTarget) app.hover.active = false; });
+  window.addEventListener('blur', () => { app.hover.active = false; });
+
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    app.cam.zoom = clamp(app.cam.zoom * Math.exp(e.deltaY * 0.0012), 0.45, 1.8);
+  }, { passive: false });
+
+  window.addEventListener('keydown', (e) => {
+    const tg = e.target;
+    const typing = tg && (tg.tagName === 'TEXTAREA' || tg.isContentEditable ||
+      (tg.tagName === 'INPUT' && !['range', 'checkbox', 'radio', 'button'].includes(tg.type)));
+    if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'Shift') canvas.classList.add('is-comb');
+    const k = e.key.toLowerCase();
+    if (k === 't') { ensureAudio(); toss(); }
+    else if (k === 'r') resetScene();
+    else if (k === 'c') setTool(P.tool === 'comb' ? 'grab' : 'comb');
+  });
+  window.addEventListener('keyup', (e) => { if (e.key === 'Shift') updateCursor(e); });
+
+  function updateCursor(e) {
+    const cl = canvas.classList;
+    const comb = P.tool === 'comb' || (e && e.shiftKey);
+    cl.toggle('is-comb', comb);
+    cl.toggle('is-drag', !comb && (drag.mode === 'grab' || drag.mode === 'orbit'));
+    cl.toggle('is-hover', !comb && drag.mode === 'none' && app.hover.over);
+  }
+  app.updateCursor = updateCursor;
+}
+
+// 每幀處理：梳毛（節流到一幀一次）、懸停偵測、相機慣性
+function frameInteraction(dt) {
+  const drag = app.drag;
+  if (drag.mode === 'comb' && drag.combPending) {
+    drag.combPending = false;
+    const hit = pick(screenRay(drag.combX, drag.combY));
+    if (hit && drag.last) {
+      const Dx = hit.p[0] - drag.last[0], Dy = hit.p[1] - drag.last[1], Dz = hit.p[2] - drag.last[2];
+      const l = Math.hypot(Dx, Dy, Dz);
+      if (l > 0.004) {
+        applyComb(hit, Dx / l, Dy / l, Dz / l);
+        drag.last = hit.p;
+        if (hit.kind === 'head') app.happy = 1;
+      }
+    } else {
+      drag.last = hit ? hit.p : null;
+    }
+  }
+  if (app.hover.pending) {
+    app.hover.pending = false;
+    const h = pick(screenRay(app.hover.x, app.hover.y));
+    app.hover.over = !!h;
+    app.hover.kind = h ? h.kind : null;
+    if (app.updateCursor) app.updateCursor(null);
+  }
+  if (drag.mode === 'none') {
+    const k = Math.exp(-dt * 5);
+    drag.vyaw *= k; drag.vpitch *= k;
+    app.cam.yaw += drag.vyaw;
+    app.cam.pitch = clamp(app.cam.pitch + drag.vpitch, 0.06, 1.25);
+  }
+}
+
+// 整隻章魚（頭 + 觸手）繞「通過頭部質心的單位軸」轉 angle（Rodrigues 公式）。
+// 運動學修正：同時轉 x 與 x0 → 不會產生速度，也不會被地面摩擦或觸手的彈力抵銷
+function rotateOctopus(ax, ay, az, angle) {
+  const c = app.head.c, cs = Math.cos(angle), sn = Math.sin(angle), t = 1 - cs;
+  const m = [
+    cs + ax * ax * t, ax * ay * t - az * sn, ax * az * t + ay * sn,
+    ay * ax * t + az * sn, cs + ay * ay * t, ay * az * t - ax * sn,
+    az * ax * t - ay * sn, az * ay * t + ax * sn, cs + az * az * t,
+  ];
+  const rot = (arr) => {
+    for (let k = 0; k < arr.length; k += 3) {
+      const dx = arr[k] - c[0], dy = arr[k + 1] - c[1], dz = arr[k + 2] - c[2];
+      arr[k] = c[0] + m[0] * dx + m[1] * dy + m[2] * dz;
+      arr[k + 1] = c[1] + m[3] * dx + m[4] * dy + m[5] * dz;
+      arr[k + 2] = c[2] + m[6] * dx + m[7] * dy + m[8] * dz;
+    }
+  };
+  rot(app.head.x); rot(app.head.x0);
+  for (const tn of app.tents) { rot(tn.x); rot(tn.x0); }
+}
+
+// 落地靜止後：翻肚就自己翻回來；臉背對鏡頭就慢慢轉回來看你
+function updateFacing(dt) {
+  const h = app.head;
+  const busy = h.grabbing || app.tents.some((t) => t.grab >= 0 || t.attached);
+  // 「靜止」：沒被抓、質心幾乎不動、而且沒被舉高（平常是觸手撐著頭，頭不一定碰到地）
+  const resting = !busy && h.c[1] < 1.35 && Math.hypot(h.vc[0], h.vc[1], h.vc[2]) < 0.5;
+  if (!resting) { app.restT = 0; return; }
+  app.restT += dt;
+  const R = h.R;
+  // (1) 翻正：頭的「上」= R·(0,1,0)，跟世界 y 軸夾角太大就繞水平軸轉回來
+  const ux = R[1], uy = R[4], uz = R[7];
+  if (!app.righting && uy < 0.5 && app.restT > 0.8) app.righting = true;
+  if (app.righting) {
+    const ang = Math.acos(clamp(uy, -1, 1));
+    if (ang < 0.1) { app.righting = false; app.wantFace = true; return; }
+    let ax = -uz, az = ux;
+    const l = Math.hypot(ax, az);
+    if (l < 1e-4) { ax = 1; az = 0; } else { ax /= l; az /= l; }
+    rotateOctopus(ax, 0, az, Math.min(ang, 2.4 * dt));
+    return;
+  }
+  // (2) 轉向鏡頭
+  if (!app.wantFace || app.restT < 0.7) return;
+  const fx = R[2], fz = R[8];   // 臉的方向 = R·(0,0,1)
+  const dx = app.cam.eye[0] - h.c[0], dz = app.cam.eye[2] - h.c[2];
+  let diff = Math.atan2(dx, dz) - Math.atan2(fx, fz);
+  diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+  if (Math.abs(diff) < 0.18) { app.wantFace = false; return; }
+  rotateOctopus(0, 1, 0, clamp(diff, -1, 1) * 1.8 * dt);
+}
+
+// 拋起來：整隻往上 + 隨機旋轉
+function toss() {
+  const rnd = Math.random;
+  const vx = (rnd() - 0.5) * 1.6, vz = (rnd() - 0.5) * 1.6;
+  app.head.grabbing = false;
+  for (const t of app.tents) { if (t.attached) t.detach(1.5); t.release(); }
+  app.head.kick(vx, 6.8, vz, (rnd() - 0.5) * 5, (rnd() - 0.5) * 3, (rnd() - 0.5) * 5);
+  for (const t of app.tents) t.kick(vx, 6.2, vz);
+  app.wantFace = true;
+  sfx.boop();
+}
+
+let hintShown = new Set(), hintTimer = 0;
+function hint(key, text) {
+  if (hintShown.has(key)) return;
+  hintShown.add(key);
+  const el = document.getElementById('toast');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+
+// ---------------------------------------------------------------------
+// 8. 介面：面板、主題色、統計、自動畫質
+// ---------------------------------------------------------------------
+const P = {
+  color: '#e9785d', belly: '#f6e3c8',
+  furLen: 0.075, density: 95, fluff: 0.5, shells: 28,
+  softness: 0.55, lively: 0.6, gravity: 1,
+  tool: 'grab', clingy: true, sound: true, autoQ: true,
+};
+const REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (REDUCED_MOTION) P.lively = 0.2;
+
+function hexToSrgb(hex) {
+  const h = hex.trim().replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const n = parseInt(full.slice(0, 6), 16);
+  return new Float32Array([((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]);
+}
+
+function readTheme() {
+  const cs = getComputedStyle(document.documentElement);
+  const get = (name, fb) => {
+    const v = cs.getPropertyValue(name).trim();
+    return /^#[0-9a-f]{3,8}$/i.test(v) ? v : fb;
+  };
+  app.theme = {
+    top: hexToSrgb(get('--gl-bg-top', '#e3ede9')),
+    bottom: hexToSrgb(get('--gl-bg-bottom', '#c4d6d1')),
+    shadow: hexToSrgb(get('--gl-shadow', '#2b4643')),
+    sky: hexToLinear(get('--gl-sky', '#f2faf7')),
+    ground: hexToLinear(get('--gl-ground', '#b3c7c1')),
+  };
+  app.theme.dark = app.theme.top[0] + app.theme.top[1] + app.theme.top[2] < 1.2;
+}
+
+function setColors() {
+  app.colors.base = hexToLinear(P.color);
+  app.colors.belly = hexToLinear(P.belly);
+  document.documentElement.style.setProperty('--accent', P.color);
+}
+
+function applyPhysicsParams() {
+  app.head.alpha = lerp(0.24, 0.035, P.softness);   // 越軟：往目標形狀拉得越少，晃得越久
+  app.head.beta = lerp(0.12, 0.62, P.softness);     // 越軟：允許越多壓扁／拉長
+}
+
+function setTool(tool) {
+  P.tool = tool;
+  for (const b of document.querySelectorAll('.seg button')) {
+    b.setAttribute('aria-checked', String(b.dataset.tool === tool));
+  }
+  if (app.updateCursor) app.updateCursor(null);
+}
+
+function bindUI() {
+  const $ = (id) => document.getElementById(id);
+  const fmt = {
+    furLen: (v) => `${(v * 100).toFixed(1)} mm`,     // 1 單位 = 10 cm
+    density: (v) => `${(v / 10).toFixed(1)} 根/cm`,
+    fluff: (v) => `${Math.round(v * 100)}%`,
+    shells: (v) => `${v} 層`,
+    softness: (v) => `${Math.round(v * 100)}%`,
+    lively: (v) => `${Math.round(v * 100)}%`,
+    gravity: (v) => `${v.toFixed(1)} g`,
+  };
+  for (const id of Object.keys(fmt)) {
+    const input = $(id), out = $(id + 'Out');
+    input.value = String(P[id]);
+    const sync = () => {
+      const v = parseFloat(input.value);
+      P[id] = v;
+      out.textContent = fmt[id](v);
+      const min = parseFloat(input.min), max = parseFloat(input.max);
+      input.style.setProperty('--fill', `${((v - min) / (max - min)) * 100}%`);
+      if (id === 'softness') applyPhysicsParams();
+      if (id === 'shells') app.quality.shells = v;   // 使用者手動調整時，蓋過自動畫質的降級
+    };
+    input.addEventListener('input', sync);
+    sync();
+  }
+  for (const sw of document.querySelectorAll('.sw')) {
+    sw.addEventListener('click', () => {
+      for (const o of document.querySelectorAll('.sw')) o.setAttribute('aria-checked', String(o === sw));
+      P.color = sw.dataset.color;
+      P.belly = sw.dataset.belly;
+      setColors();
+    });
+  }
+  for (const b of document.querySelectorAll('.seg button')) b.addEventListener('click', () => setTool(b.dataset.tool));
+  for (const id of ['clingy', 'sound', 'autoQ']) {
+    const el = $(id);
+    el.checked = P[id];
+    el.addEventListener('change', () => {
+      P[id] = el.checked;
+      if (id === 'sound' && el.checked) ensureAudio();
+      if (id === 'autoQ' && !el.checked) { app.quality.dpr = 1; app.quality.shells = P.shells; }
+    });
+  }
+  $('tossBtn').addEventListener('click', () => { ensureAudio(); toss(); });
+  $('fluffBtn').addEventListener('click', () => { app.fluffAnim = 0.7; });
+  $('resetBtn').addEventListener('click', () => resetScene());
+  const panel = $('panel'), tog = $('panelToggle');
+  tog.addEventListener('click', () => {
+    const open = !panel.classList.contains('open');
+    panel.classList.toggle('open', open);
+    document.body.classList.toggle('panel-open', open);
+    tog.setAttribute('aria-expanded', String(open));
+    measureLayout();
+  });
+  if (REDUCED_MOTION) { $('lively').value = String(P.lively); $('lively').dispatchEvent(new Event('input')); }
+}
+
+// 面板擋住的範圍（px），相機用它把章魚擺在剩下空間的中央
+function measureLayout() {
+  const w = window.innerWidth;
+  const panel = document.getElementById('panel');
+  const intro = document.querySelector('.intro');
+  if (w > 720) {
+    const r = panel.getBoundingClientRect();
+    app.layout.right = Math.min(w * 0.45, r.width + 24);
+    app.layout.bottom = 0;
+    app.layout.top = 0;
+  } else {
+    const r = panel.getBoundingClientRect();
+    app.layout.right = 0;
+    app.layout.bottom = Math.max(0, window.innerHeight - r.top);
+    // 面板展開時標題會淡出，章魚可以用到上方空間
+    const open = panel.classList.contains('open');
+    app.layout.top = intro && !open ? Math.min(intro.getBoundingClientRect().bottom, window.innerHeight * 0.3) : 0;
+  }
+}
+
+// 自動畫質：每 1.5 秒看一次平均幀時間，太慢先降解析度再降層數；穩定後慢慢升回去
+function autoQuality(dt) {
+  const q = app.quality;
+  if (app.time < 2.5) return;   // 開頭幾秒在編譯著色器，不列入判斷
+  q.acc += dt; q.frames++;
+  if (q.acc < 1.5) return;
+  const avg = q.acc / q.frames;
+  q.acc = 0; q.frames = 0;
+  q.cool = Math.max(0, q.cool - 1.5);
+  if (!P.autoQ) return;
+  if (avg > 0.024) {
+    if (q.dpr > 0.6) q.dpr = Math.max(0.6, q.dpr - 0.15);
+    else if (q.shells > 12) q.shells = Math.max(12, q.shells - 4);
+    q.good = 0;
+    q.cool = q.justRaised ? 30 : 6;
+    q.justRaised = false;
+  } else if (avg < 0.0185) {
+    q.good++;
+    q.justRaised = false;
+    if (q.good >= 3 && q.cool <= 0) {
+      if (q.dpr < 1) { q.dpr = Math.min(1, q.dpr + 0.15); q.justRaised = true; }
+      else if (q.shells < P.shells) { q.shells = Math.min(P.shells, q.shells + 4); q.justRaised = true; }
+      q.good = 0;
+    }
+  }
+}
+
+function updateStats(dt) {
+  const s = app.stats;
+  s.acc += dt; s.frames++;
+  if (s.acc < 0.5) return;
+  const fps = s.frames / s.acc;
+  s.acc = 0; s.frames = 0;
+  const shells = shellCount();
+  const tris = (app.headMesh.nf + app.tentMesh.index.length / 3) * (shells + 1);
+  const particles = app.head.n + NT * NP;
+  const el = document.getElementById('stats');
+  el.textContent =
+    `${fps.toFixed(0).padStart(3)} fps · ${(1000 / fps).toFixed(1)} ms · WebGL2\n` +
+    `${shells} 層毛殼 · ${(tris / 10000).toFixed(1)} 萬個三角形\n` +
+    `${particles} 個物理粒子 · 解析度 ${app.dpr.toFixed(2)}×`;
+}
+
+function shellCount() {
+  return Math.round(Math.min(P.shells, app.quality.shells));
+}
+
+
+// ---------------------------------------------------------------------
+// 9. 主程式：固定步長物理（120 Hz 子步驟）＋ 每幀重建網格與繪製
+// ---------------------------------------------------------------------
+const SUB = 1 / 120, MAX_SUB = 4;
+const norm3 = (v) => { const l = Math.hypot(v[0], v[1], v[2]); return new Float32Array([v[0] / l, v[1] / l, v[2] / l]); };
+const KEY_DIR = norm3([-0.45, 0.85, 0.55]);   // 主光：左上前方
+const FILL_DIR = norm3([0.8, 0.22, 0.3]);     // 補光：右側偏冷
+const KEY_COL = new Float32Array([2.2, 2.08, 1.92]);
+const FILL_COL = new Float32Array([0.3, 0.38, 0.46]);
+const RIM_COL = new Float32Array([0.7, 0.78, 0.86]);
+const MOUTH = hexToLinear('#4a2620');
+const BLUSH = hexToLinear('#f48b8b');
+
+const app = {
+  cam: {
+    yaw: 0, pitch: 0.42, zoom: 1, fov: (30 * Math.PI) / 180,
+    target: [0, 0.6, 0], eye: [0, 3, 8],
+    view: M4.create(), proj: M4.create(), viewProj: M4.create(),
+    fwd: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0], n: 0.1, l: -1, r: 1, b: -1, t: 1,
+  },
+  layout: { right: 0, bottom: 0, top: 0 },
+  drag: {
+    mode: 'none', x0: 0, y0: 0, lx: 0, ly: 0, t0: 0, moved: false, vyaw: 0, vpitch: 0,
+    hit: null, plane: null, last: null, pinch: 0, combX: 0, combY: 0, combPending: false,
+  },
+  hover: { active: false, x: 0, y: 0, pending: false, over: false, kind: null },
+  quality: { dpr: 1, shells: P.shells, acc: 0, frames: 0, good: 0, cool: 0, justRaised: false },
+  stats: { acc: 0, frames: 0 },
+  colors: {},
+  time: 0, simTime: 0, acc: 0, frameDt: 1 / 60, last: 0,
+  happy: 0, blink: 1, blinkT: 2.5, blinkPhase: -1, fluffAnim: 0, wantFace: false, restT: 0, righting: false,
+  dpr: 1, viewW: 1, viewH: 1, cling: null, silent: false, running: true,
+};
+
+function step(dt) {
+  const head = app.head, tents = app.tents, g = 9.8 * P.gravity;
+  app.simTime += dt;
+  // 呼吸：靜止形狀微微放大縮小
+  head.scale = 1 + 0.012 * Math.sin(app.simTime * 1.85) * (0.3 + P.lively);
+  applyClingForces(dt);
+  head.predict(dt, g);
+  for (const t of tents) t.predict(dt, g);
+  head.shapeMatch();
+  const iters = 4;
+  for (let it = 0; it < iters; it++) {
+    const last = it === iters - 1;
+    head.applyGrab(0.3);
+    for (const t of tents) t.solve(head, last);
+    if (it & 1) collideTentacles(tents);
+    head.collide(last ? 0.55 : 0);
+  }
+  head.finish(dt);
+  for (const t of tents) t.finish(dt);
+  if (head.impact > 2.4 && !app.silent) sfx.squish(head.impact);
+  head.impact = 0;
+  // 保險：萬一數值爆掉（NaN），直接重置，不讓畫面壞掉
+  if (!Number.isFinite(head.c[0] + head.c[1] + head.c[2]) && !app.silent) resetScene();
+}
+
+function resetScene() {
+  app.silent = true;
+  app.wantFace = false;
+  app.righting = false;
+  app.head.reset(0, 0);
+  for (const t of app.tents) t.reset(app.head);
+  app.headMesh.combRest.fill(0);
+  app.tentMesh.comb.fill(0);
+  // 先在背景模擬 2 秒，讓觸手自然攤平、尖端捲起來
+  for (let i = 0; i < 240; i++) {
+    for (const t of app.tents) t.animate(app.simTime, P.lively);
+    step(SUB);
+  }
+  app.silent = false;
+}
+
+function resize() {
+  const canvas = app.renderer.canvas;
+  const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.75) * app.quality.dpr;
+  const W = Math.max(1, Math.round(w * dpr)), H = Math.max(1, Math.round(h * dpr));
+  if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+  app.viewW = w; app.viewH = h; app.dpr = dpr;
+}
+
+function projectUv(p) {
+  const m = app.cam.viewProj;
+  const x = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12];
+  const y = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13];
+  const w = m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15];
+  return [clamp(x / w * 0.5 + 0.5, -0.5, 1.5), clamp(y / w * 0.5 + 0.5, -0.5, 1.5)];
+}
+
+function render() {
+  const R = app.renderer, gl = R.gl, cam = app.cam, th = app.theme, hc = app.head.c;
+  R.upload(app.furHead);
+  R.upload(app.furTent);
+
+  // (1) 接觸陰影（對齊陰影貼圖的像素，移動時不閃爍）
+  const texel = (2 * SHADOW_HALF) / SHADOW_RES;
+  const cx = Math.round(hc[0] / texel) * texel, cz = Math.round(hc[2] / texel) * texel;
+  const shear = 0.35;
+  R.shadowPass([app.furHead, app.furTent], cx, cz, (KEY_DIR[0] / KEY_DIR[1]) * shear, (KEY_DIR[2] / KEY_DIR[1]) * shear);
+
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.viewport(0, 0, R.canvas.width, R.canvas.height);
+  gl.clearColor(th.bottom[0], th.bottom[1], th.bottom[2], 1);
+  gl.clearDepth(1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  // (2) 攝影棚背景
+  gl.disable(gl.DEPTH_TEST);
+  gl.depthMask(false);
+  gl.disable(gl.CULL_FACE);
+  gl.disable(gl.BLEND);
+  let p = R.progBg;
+  gl.useProgram(p.p);
+  gl.uniform3fv(p.u('uTop'), th.top);
+  gl.uniform3fv(p.u('uBottom'), th.bottom);
+  gl.uniform2f(p.u('uRes'), R.canvas.width, R.canvas.height);
+  const fu = projectUv(hc);
+  gl.uniform2f(p.u('uFocus'), fu[0], fu[1]);
+  gl.bindVertexArray(R.emptyVAO);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+  // (3) 地板上的影子（乘法混合）
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.DST_COLOR, gl.ZERO);
+  p = R.progFloor;
+  gl.useProgram(p.p);
+  gl.uniformMatrix4fv(p.u('uViewProj'), false, cam.viewProj);
+  gl.uniform3f(p.u('uCenter'), cx, 0, cz);
+  gl.uniform1f(p.u('uHalf'), SHADOW_HALF);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, R.shA.tex);
+  gl.uniform1i(p.u('uTex'), 0);
+  gl.uniform3fv(p.u('uShadowCol'), th.shadow);
+  gl.uniform1f(p.u('uStrength'), th.dark ? 1.3 : 1.05);
+  gl.bindVertexArray(R.quadVAO);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  gl.disable(gl.BLEND);
+
+  // (4) 毛：頭與觸手各一次 instanced draw，每次畫 (層數+1) 份
+  gl.enable(gl.DEPTH_TEST);
+  gl.depthFunc(gl.LEQUAL);
+  gl.depthMask(true);
+  gl.enable(gl.CULL_FACE);
+  gl.cullFace(gl.BACK);
+  if (R.samples > 0) gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
+  p = R.progFur;
+  gl.useProgram(p.p);
+  const shells = shellCount();
+  gl.uniformMatrix4fv(p.u('uViewProj'), false, cam.viewProj);
+  gl.uniform3fv(p.u('uCamPos'), cam.eye);
+  gl.uniform1f(p.u('uShells'), shells);
+  gl.uniform1f(p.u('uFurLen'), P.furLen);
+  gl.uniform1f(p.u('uFluff'), P.fluff);
+  gl.uniform1f(p.u('uTime'), REDUCED_MOTION ? 0 : app.time);
+  gl.uniform1f(p.u('uGrav'), 0.3 * P.gravity);
+  gl.uniform1f(p.u('uDensity'), P.density);
+  gl.uniform1f(p.u('uHappy'), app.happy);
+  gl.uniform1f(p.u('uExposure'), th.dark ? 0.95 : 0.9);
+  gl.uniform3fv(p.u('uBase'), app.colors.base);
+  gl.uniform3fv(p.u('uBelly'), app.colors.belly);
+  gl.uniform3fv(p.u('uMouth'), MOUTH);
+  gl.uniform3fv(p.u('uBlush'), BLUSH);
+  gl.uniform3fv(p.u('uKeyDir'), KEY_DIR);
+  gl.uniform3fv(p.u('uKeyCol'), KEY_COL);
+  gl.uniform3fv(p.u('uFillDir'), FILL_DIR);
+  gl.uniform3fv(p.u('uFillCol'), FILL_COL);
+  gl.uniform3fv(p.u('uRimCol'), RIM_COL);
+  gl.uniform3fv(p.u('uSky'), th.sky);
+  gl.uniform3fv(p.u('uGround'), th.ground);
+  gl.uniform3fv(p.u('uHeadC'), hc);
+  gl.uniform3fv(p.u('uEye0'), EYE_DIRS[0]);
+  gl.uniform3fv(p.u('uEye1'), EYE_DIRS[1]);
+  gl.uniform1i(p.u('uKind'), 0);
+  gl.bindVertexArray(app.furHead.vao);
+  gl.drawElementsInstanced(gl.TRIANGLES, app.furHead.count, gl.UNSIGNED_SHORT, 0, shells + 1);
+  gl.uniform1i(p.u('uKind'), 1);
+  gl.bindVertexArray(app.furTent.vao);
+  gl.drawElementsInstanced(gl.TRIANGLES, app.furTent.count, gl.UNSIGNED_SHORT, 0, shells + 1);
+  gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);
+
+  // (5) 眼睛
+  drawEyes();
+  gl.bindVertexArray(null);
+}
+
+function drawEyes() {
+  const R = app.renderer, gl = R.gl, p = R.progEye, hm = app.headMesh, Rm = app.head.R, th = app.theme;
+  gl.useProgram(p.p);
+  gl.uniformMatrix4fv(p.u('uViewProj'), false, app.cam.viewProj);
+  gl.uniform3fv(p.u('uCamPos'), app.cam.eye);
+  gl.uniform3fv(p.u('uKeyDir'), KEY_DIR);
+  gl.uniform3fv(p.u('uKeyCol'), KEY_COL);
+  gl.uniform3fv(p.u('uFillDir'), FILL_DIR);
+  gl.uniform3fv(p.u('uSky'), th.sky);
+  gl.uniform3fv(p.u('uGround'), th.ground);
+  gl.uniform3fv(p.u('uMouth'), MOUTH);
+  gl.uniform1f(p.u('uExposure'), th.dark ? 0.95 : 0.9);
+  const up = [Rm[1], Rm[4], Rm[7]];   // 頭部的「上」= R·(0,1,0)
+  const happy = app.happy > 0.35;
+  const mesh = happy ? R.arc : R.sphere;
+  gl.uniform1i(p.u('uMode'), happy ? 1 : 0);
+  gl.bindVertexArray(mesh.vao);
+  for (const idx of hm.eyeIdx) {
+    const k = idx * 3;
+    const n = [hm.nor[k], hm.nor[k + 1], hm.nor[k + 2]];
+    const lift = happy ? P.furLen * 0.9 + 0.012 : 0.035;
+    const E = [hm.pos[k] + n[0] * lift, hm.pos[k + 1] + n[1] * lift, hm.pos[k + 2] + n[2] * lift];
+    if (happy) R.eyeModel(E, n, up, 0.085, 0.085, 0.085);
+    else R.eyeModel(E, n, up, 0.105, 0.105 * app.blink, 0.105);
+    gl.uniformMatrix4fv(p.u('uModel'), false, R.model);
+    gl.uniformMatrix3fv(p.u('uNormalMat'), false, R.nmat);
+    gl.drawElements(gl.TRIANGLES, mesh.count, gl.UNSIGNED_SHORT, 0);
+  }
+  // 刺繡嘴巴：浮在毛尖上的細線；把「上」反過來 = 繞法線轉 180°，∩ 變成 ∪
+  const k = hm.mouthIdx * 3;
+  const n = [hm.nor[k], hm.nor[k + 1], hm.nor[k + 2]];
+  const lift = P.furLen * 0.75 + 0.008;
+  const E = [hm.pos[k] + n[0] * lift, hm.pos[k + 1] + n[1] * lift, hm.pos[k + 2] + n[2] * lift];
+  const s = 0.07 + 0.02 * Math.min(1, app.happy * 1.5);
+  R.eyeModel(E, n, [-up[0], -up[1], -up[2]], s, s * (0.9 + 0.3 * Math.min(1, app.happy)), s);
+  gl.uniform1i(p.u('uMode'), 1);
+  gl.uniformMatrix4fv(p.u('uModel'), false, R.model);
+  gl.uniformMatrix3fv(p.u('uNormalMat'), false, R.nmat);
+  gl.bindVertexArray(R.mouth.vao);
+  gl.drawElements(gl.TRIANGLES, R.mouth.count, gl.UNSIGNED_SHORT, 0);
+}
+
+function updateFace(dt) {
+  // 眨眼：每 2.5～6.5 秒一次，閉眼約 0.16 秒
+  if (app.blinkPhase >= 0) {
+    app.blinkPhase += dt;
+    const t = app.blinkPhase / 0.16;
+    app.blink = t >= 1 ? 1 : 1 - Math.sin(t * Math.PI) * 0.92;
+    if (t >= 1) app.blinkPhase = -1;
+  } else {
+    app.blinkT -= dt;
+    if (app.blinkT <= 0) { app.blinkPhase = 0; app.blinkT = 2.5 + Math.random() * 4; }
+  }
+  const combingHead = app.drag.mode === 'comb' && app.happy >= 1;
+  if (!combingHead) app.happy = Math.max(0, app.happy - dt * 0.7);
+  // 「弄蓬毛」：梳痕在 0.7 秒內慢慢消失
+  if (app.fluffAnim > 0) {
+    app.fluffAnim -= dt;
+    const k = app.fluffAnim > 0 ? Math.exp(-dt * 7) : 0;
+    const a = app.headMesh.combRest, b = app.tentMesh.comb;
+    for (let i = 0; i < a.length; i++) a[i] *= k;
+    for (let i = 0; i < b.length; i++) b[i] *= k;
+  }
+}
+
+function frame(now) {
+  if (!app.running) return;
+  try {
+    const dt = Math.min(0.05, Math.max(0.001, (now - app.last) / 1000));
+    app.last = now;
+    app.frameDt = dt;
+    app.time += dt;
+    frameInteraction(dt);
+    updateClingy(dt);
+    for (const t of app.tents) t.animate(app.simTime, P.lively);
+    app.acc += dt;
+    let n = 0;
+    while (app.acc >= SUB && n < MAX_SUB) { step(SUB); app.acc -= SUB; n++; }
+    if (n >= MAX_SUB) app.acc = 0;
+    updateFace(dt);
+    updateFacing(dt);
+    app.headMesh.update(app.head);
+    app.tentMesh.update(app.tents);
+    resize();
+    updateCamera();
+    render();
+    autoQuality(dt);
+    updateStats(dt);
+  } catch (err) {
+    app.running = false;
+    showFallback(err);
+    return;
+  }
+  requestAnimationFrame(frame);
+}
+
+function showFallback(err) {
+  console.error(err);
+  const msg = document.getElementById('fallbackMsg');
+  if (err && err.message === 'CONTEXT_LOST') {
+    msg.textContent = '顯示卡暫時中斷了連線，重新整理頁面就能把章魚叫回來。';
+  } else if (err && err.message !== 'NO_WEBGL2') {
+    msg.textContent = `章魚載入時出錯了（${err.message}）。請重新整理，或改用新版的 Chrome、Edge、Safari、Firefox。`;
+  }
+  document.getElementById('fallback').hidden = false;
+}
+
+function init() {
+  const canvas = document.getElementById('scene');
+  try {
+    app.renderer = new Renderer(canvas);
+  } catch (err) {
+    showFallback(err);
+    return;
+  }
+  canvas.addEventListener('webglcontextlost', (e) => {
+    e.preventDefault();
+    app.running = false;
+    showFallback(new Error('CONTEXT_LOST'));
+  });
+  const rnd = makeRng(20261007);
+  app.head = new SoftHead();
+  app.tents = [];
+  for (let k = 0; k < NT; k++) app.tents.push(new Tentacle(k, app.head, rnd));
+  app.headMesh = new HeadMesh(app.head);
+  app.tentMesh = new TentacleMesh(app.tents);
+  app.furHead = app.renderer.furMesh(app.headMesh.dyn, app.headMesh.stat, app.headMesh.index);
+  app.furTent = app.renderer.furMesh(app.tentMesh.dyn, app.tentMesh.stat, app.tentMesh.index);
+  readTheme();
+  setColors();
+  bindUI();
+  applyPhysicsParams();
+  setupPointer(canvas);
+  measureLayout();
+  window.addEventListener('resize', measureLayout);
+  const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  if (mq && mq.addEventListener) mq.addEventListener('change', readTheme);
+  new MutationObserver(readTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureLayout).catch(() => {});
+  resetScene();
+  app.last = performance.now();
+  // 給自動化測試用的掛鉤（不影響一般使用）
+  window.__octo = {
+    app, P, step, render, pick, screenRay, applyComb, toss, resetScene, setTool, rotateOctopus,
+    simulate(n) {
+      for (let i = 0; i < n; i++) {
+        for (const t of app.tents) t.animate(app.simTime, P.lively);
+        step(SUB);
+      }
+    },
+    // 不畫圖、只推進邏輯與物理（測試用，固定 60 fps）
+    advance(sec) {
+      const n = Math.max(1, Math.round(sec * 60)), dt = 1 / 60;
+      for (let i = 0; i < n; i++) {
+        app.frameDt = dt;
+        app.time += dt;
+        frameInteraction(dt);
+        updateClingy(dt);
+        for (const t of app.tents) t.animate(app.simTime, P.lively);
+        step(SUB);
+        step(SUB);
+        updateFace(dt);
+        updateFacing(dt);
+        app.headMesh.update(app.head);
+        app.tentMesh.update(app.tents);
+        updateCamera();
+      }
+    },
+    resume() {
+      if (app.running) return;
+      app.running = true;
+      app.last = performance.now();
+      requestAnimationFrame(frame);
+    },
+    project(p) {
+      const m = app.cam.viewProj;
+      const x = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12];
+      const y = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13];
+      const w = m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15];
+      return [(x / w * 0.5 + 0.5) * app.viewW, (1 - (y / w * 0.5 + 0.5)) * app.viewH];
+    },
+    frameOnce() {
+      updateFace(0);
+      app.headMesh.update(app.head);
+      app.tentMesh.update(app.tents);
+      resize();
+      measureLayout();
+      updateCamera();
+      render();
+    },
+  };
+  requestAnimationFrame(frame);
+}
+
+init();
+
+</script>
+</body>
+</html>
